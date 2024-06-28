@@ -15,7 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
     container: emscripten/emsdk:latest
@@ -25,6 +24,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
       # - name: Install Dependencies
       #   run: sudo apt-get update && sudo apt-get install -yq python3 ninja-build
       # - name: Install CMake
@@ -33,12 +35,8 @@ jobs:
         run: |
           cmake --preset default
           cmake --build --preset default
-    - uses: actions/upload-artifact@v4
-      with:
-        name: page
-        path: ./build/out/Debug .
-        if-no-files-found: error
-
+          mkdir -p _site
+          mv build/out/* _site/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
@@ -55,12 +53,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@master
-        with:
-          name: page
-          path: .
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@v4

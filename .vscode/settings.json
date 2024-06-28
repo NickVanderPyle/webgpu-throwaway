@@ -1,7 +1,7 @@
 {
     "task.allowAutomaticTasks": "on",
 
-    "livePreview.defaultPreviewPath": "build/out/Debug/WebGPU.html",
+    "livePreview.defaultPreviewPath": "build/out/index.html",
     "livePreview.serverRoot": "build/out/",
     "livePreview.portNumber": 3000,
     "livePreview.autoRefreshPreview": "On Changes to Saved Files",

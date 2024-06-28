@@ -25,6 +25,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
 target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_WEBGPU=1" "-sUSE_GLFW=3")
 
 
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${PROJECT_SOURCE_DIR}/emscripten/post-build.sh \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\"
+    COMMENT "Running emscripten/post-build.sh..."
+)
+
+
 add_custom_target(clean-all
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_BINARY_DIR}
 )
