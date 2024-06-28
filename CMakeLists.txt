@@ -6,7 +6,7 @@
     Clean with preset (delete the build directory):
         cmake --build ./build --target clean-all
 ]]
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.21)
 project(
     WebGPU
     VERSION 0.1.0
