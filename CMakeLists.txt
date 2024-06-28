@@ -14,7 +14,7 @@ project(
 )
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
-set(SRC_DIR "${PROJECT_SOURCE_DIR}/src")
+set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
 
 file(GLOB_RECURSE APP_HEADERS CONFIGURE_DEPENDS "${SRC_DIR}/*.h")
 file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS "${SRC_DIR}/*.cpp")
@@ -27,8 +27,10 @@ target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_WEBGPU=1" "-sUSE_GLFW=3")
 
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${PROJECT_SOURCE_DIR}/emscripten/post-build.sh \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\"
-    COMMENT "Running emscripten/post-build.sh..."
+    COMMAND ${CMAKE_COMMAND} -E rename
+        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/WebGPU.html"
+        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/index.html"
+    COMMENT "Renaming WebGPU.html to index.html"
 )
 
 
