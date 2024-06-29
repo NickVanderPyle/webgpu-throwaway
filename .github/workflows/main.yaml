@@ -32,8 +32,10 @@ jobs:
         run: |
           echo $PWD
           ls -lah
-          cmake --preset default .
-          cmake --build
+          cmake --preset default
+          echo $PWD
+          ls -lah
+          cmake --build --preset default
           mkdir -p _site
           mv build/out/* _site/
       - name: Upload artifact
