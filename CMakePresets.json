@@ -17,5 +17,11 @@
                 "CMAKE_CXX_EXTENSIONS": "OFF"
             }
         }
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default"
+        }
     ]
 }

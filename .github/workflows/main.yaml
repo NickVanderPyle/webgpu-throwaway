@@ -30,9 +30,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -yq ninja-build
       - name: Build
         run: |
-          cmake --list-presets
           cmake --preset default
-          cmake --list-presets
           cmake --build --preset default
           mkdir -p _site
           mv build/out/* _site/
