@@ -1,14 +1,20 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "Live Preview",
-			"detail": "Load on startup to remind that preview is available",
-			"workspacePath": "${workspaceFolder}",
-			"label": "Live Preview: Run Server",
-			"runOptions": {
-				"runOn": "folderOpen"
-			}
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "LivePreview on Load",
+            "type": "process",
+            "command": "${input:livepreview}",
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "livepreview",
+            "type": "command",
+            "command": "livePreview.start"
+        }
+    ]
 }
