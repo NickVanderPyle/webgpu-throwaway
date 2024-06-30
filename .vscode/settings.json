@@ -5,7 +5,6 @@
     "livePreview.serverRoot": "build/out/",
     "livePreview.portNumber": 3000,
     "livePreview.autoRefreshPreview": "On Changes to Saved Files",
-    "livePreview.tasks.runTaskWithExternalPreview": true,
     "livePreview.serverKeepAliveAfterEmbeddedPreviewClose": 0,
 
     "cmake.configureOnOpen": true,
