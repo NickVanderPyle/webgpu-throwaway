@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>WebGPU-</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+    }
+
+    .emscripten {
+      padding-right: 0;
+      margin-left: auto;
+      margin-right: auto;
+      display: block;
+    }
+
+    div.emscripten {
+      text-align: center;
+    }
+
+    /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+    canvas.emscripten {
+      border: 0px none;
+      background-color: black;
+      image-rendering: pixelated;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="emscripten">
+    <progress value="0" max="100" id="progress" hidden=1></progress>
+  </div>
+
+  <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+
+  <script type='text/javascript'>
+    const progressElement = document.getElementById('progress');
+
+    var Module = {
+      canvas: (() => {
+        const canvas = document.getElementById('canvas');
+        canvas.addEventListener("webglcontextlost", (e) => { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+
+        return canvas;
+      })(),
+
+      totalDependencies: 0,
+      monitorRunDependencies: (left) => {
+        Module.totalDependencies = Math.max(Module.totalDependencies, left);
+        if (left) {
+          progressElement.value = (Module.totalDependencies - left) * 100;
+          progressElement.max = Module.totalDependencies * 100;
+          progressElement.hidden = false;
+        } else {
+          progressElement.hidden = true;
+        }
+      }
+    };
+  </script>
+  {{{ SCRIPT }}}
+</body>
+
+</html>

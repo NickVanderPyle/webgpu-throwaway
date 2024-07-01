@@ -23,6 +23,7 @@ add_executable(${PROJECT_NAME} ${APP_HEADERS} ${APP_SOURCES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
 target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_WEBGPU=1" "-sUSE_GLFW=3")
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "--shell-file ${CMAKE_SOURCE_DIR}/template/shell.html")
 
 
 add_custom_command(
