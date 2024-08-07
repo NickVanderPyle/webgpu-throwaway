@@ -1,3 +1,3 @@
 # WebGPU Experiment
 
-Throwaway code.
+Compiled page [here](https://nickvanderpyle.github.io/webgpu-throwaway/).
