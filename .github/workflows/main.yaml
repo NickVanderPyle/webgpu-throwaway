@@ -17,12 +17,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install Dependencies
-        run: sudo apt-get update && sudo apt-get install -yq ninja-build
+      - name: Install emscripten
+        run: |
+          cd $HOME
+          git clone --depth=1 https://github.com/emscripten-core/emsdk.git
+          git fetch --tags
+          git describe --tags `git rev-list --tags --max-count=1`
+          git checkout $latest_tag
+          cd $HOME/emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+
       - name: Build
         run: |
-          cmake --preset default
-          cmake --build --preset default
+          source "$HOME/emsdk/emsdk_env.sh"
+          cmake
+          cmake --build
           mkdir -p _site
           mv build/out/* _site/
       - name: Upload artifact

@@ -1,18 +1,24 @@
 {
 	"name": "c++ webgpu",
 	"build": {
-		"dockerfile": "Dockerfile"
+		"dockerfile": "Dockerfile",
+		"options": [
+			"--progress=plain"
+		]
 	},
 	"forwardPorts": [
+		// port number specified for livePreview.portNumber
 		3000
 	],
 	"customizations": {
 		"vscode": {
 			"extensions": [
+				"ms-vscode.live-server",
 				"ms-vscode.cpptools-extension-pack",
-				"ms-vscode.live-server"
+				"ms-azuretools.vscode-docker",
+				"llvm-vs-code-extensions.vscode-clangd",
+				"polymeilex.wgsl"
 			]
 		}
-	},
-	"remoteUser": "emscripten"
+	}
 }

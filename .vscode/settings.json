@@ -1,21 +1,17 @@
 {
+    // Allow tasks.json "LivePreview on Load" to run on VSCode startup.
     "task.allowAutomaticTasks": "on",
-
+    // output path set in CMakeLists.txt by CMAKE_RUNTIME_OUTPUT_DIRECTORY
     "livePreview.defaultPreviewPath": "build/out/index.html",
-    "livePreview.serverRoot": "build/out/",
     "livePreview.portNumber": 3000,
-    "livePreview.autoRefreshPreview": "On Changes to Saved Files",
     "livePreview.serverKeepAliveAfterEmbeddedPreviewClose": 0,
-
-    "cmake.configureOnOpen": true,
     "cmake.useCMakePresets": "always",
-    
-    // Can't get this to work.
-    //"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "C_Cpp.default.includePath": [
-        "${default}",
-        "${env:EMSDK}/upstream/emscripten/system/include"
-    ],
-    "C_Cpp.default.cStandard": "c17",
-    "C_Cpp.default.cppStandard": "c++20",
+    "cmake.configureOnOpen": true,
+    "C_Cpp.autoAddFileAssociations": false,
+    // Disable so clangd extension can handle intellisense.
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "C_Cpp.codeAnalysis.runAutomatically": true,
+    "C_Cpp.codeAnalysis.clangTidy.enabled": false,
+    "editor.formatOnSave": true,
+    "wgsl.validateOnType": true
 }
