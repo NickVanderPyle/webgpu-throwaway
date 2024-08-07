@@ -189,6 +189,15 @@ void ShaderPipeline::Render(const std::unique_ptr<wgpu::RenderPassEncoder> &rend
     MyUniforms uniforms = this->uniforms;
     uniforms.time = time;
 
+    auto angle = 20.0f * time;
+
+    glm::mat4 rotationMatrix =
+        glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *  // Rotate around Z axis
+        glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f)) *  // Rotate around Y axis
+        glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));    // Rotate around X axis
+
+    this->uniforms.modelMatrix = rotationMatrix;  // glm::mat4x4(1.0f);
+
     renderPass->SetPipeline(this->pipeline->Get());
 
     renderPass->SetVertexBuffer(0, this->model->vertexBuffer->Get(), 0, this->model->vertexCount * sizeof(VertexAttributes));
