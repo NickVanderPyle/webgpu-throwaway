@@ -28,16 +28,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
-      - name: Build
-        run: |
-          source "$HOME/emsdk/emsdk_env.sh"
-          cmake
-          cmake --build
-          mkdir -p _site
-          mv build/out/* _site/
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-
   deploy:
     needs: build
     permissions:
