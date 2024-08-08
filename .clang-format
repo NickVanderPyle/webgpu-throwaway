@@ -2,3 +2,17 @@ BasedOnStyle: Google
 IndentWidth: 4
 ColumnLimit: 0
 IncludeBlocks: Merge
+SortIncludes: true
+IncludeCategories:
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+  - Regex:           '^<.*\.hpp>'
+    Priority:        2
+  - Regex:           '^<.*>'
+    Priority:        3
+  - Regex:           '^".*\.h"'
+    Priority:        4
+  - Regex:           '^".*\.hpp"'
+    Priority:        5
+  - Regex:           '^".*"'
+    Priority:        6

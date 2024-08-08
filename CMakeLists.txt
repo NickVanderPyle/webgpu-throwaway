@@ -15,9 +15,6 @@ project(
 
 set(CMAKE_BUILD_TYPE Debug)
 
-# Maybe for clangd?
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 # Corrects cpptools failing to query em++ for and falling back to defailt c++ language version.
 add_compile_options(--target=wasm32-unknown-emscripten)
 

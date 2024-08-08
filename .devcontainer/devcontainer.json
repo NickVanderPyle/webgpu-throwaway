@@ -16,7 +16,6 @@
 				"ms-vscode.live-server",
 				"ms-vscode.cpptools-extension-pack",
 				"ms-azuretools.vscode-docker",
-				"llvm-vs-code-extensions.vscode-clangd",
 				"polymeilex.wgsl"
 			]
 		}

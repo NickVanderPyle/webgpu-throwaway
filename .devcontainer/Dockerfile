@@ -8,8 +8,6 @@ RUN apt-get update \
     cmake \
     # Git needed to clone the newest emscripten tag
     git \
-    # for VSCode intellisense
-    clangd \
     # Emscripten requirements & nice-to-have
     build-essential \
     ca-certificates \

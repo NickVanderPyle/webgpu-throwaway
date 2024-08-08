@@ -1,8 +1,15 @@
 #include "shaderPipeline.hpp"
+#include <cstddef>
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
 #include "resourceManager.hpp"
+
+// offsetof from std lib has trouble with VSCode intellisense, override.
+template <typename T, typename U>
+constexpr size_t offsetOfMember(U T::*member) {
+    return (char *)&((T *)nullptr->*member) - (char *)nullptr;
+}
 
 bool ShaderPipeline::InitBindGroupLayout(const std::unique_ptr<wgpu::Device> &device) {
     std::array<wgpu::BindGroupLayoutEntry, 1> bindingLayoutEntries{
@@ -39,13 +46,13 @@ bool ShaderPipeline::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &dev
         // Normal attribute
         wgpu::VertexAttribute{
             .format = wgpu::VertexFormat::Float32x3,
-            .offset = offsetof(ResourceManager::VertexAttributes, normal),
+            .offset = offsetOfMember(&ResourceManager::VertexAttributes::normal),
             .shaderLocation = 1,
         },
         // Color attribute
         wgpu::VertexAttribute{
             .format = wgpu::VertexFormat::Float32x3,
-            .offset = offsetof(ResourceManager::VertexAttributes, color),
+            .offset = offsetOfMember(&ResourceManager::VertexAttributes::color),
             .shaderLocation = 2,
         },
     };

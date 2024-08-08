@@ -7,11 +7,11 @@
     "livePreview.serverKeepAliveAfterEmbeddedPreviewClose": 0,
     "cmake.useCMakePresets": "always",
     "cmake.configureOnOpen": true,
+    "cmake.options.statusBarVisibility": "icon",
     "C_Cpp.autoAddFileAssociations": false,
-    // Disable so clangd extension can handle intellisense.
-    "C_Cpp.intelliSenseEngine": "disabled",
     "C_Cpp.codeAnalysis.runAutomatically": true,
-    "C_Cpp.codeAnalysis.clangTidy.enabled": false,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.mergeConfigurations": false,
     "editor.formatOnSave": true,
     "wgsl.validateOnType": true
 }
