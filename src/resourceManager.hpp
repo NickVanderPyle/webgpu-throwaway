@@ -1,7 +1,7 @@
 #pragma once
 #include <webgpu/webgpu_cpp.h>
-#include <filesystem>
 #include <glm/glm.hpp>
+#include <filesystem>
 #include <memory>
 
 class ResourceManager {

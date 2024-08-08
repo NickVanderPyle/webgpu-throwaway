@@ -1,5 +1,4 @@
 #pragma once
-
 #include <webgpu/webgpu_cpp.h>
 #include <memory>
 #include "glm/ext/vector_float3.hpp"

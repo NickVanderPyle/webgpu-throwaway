@@ -1,5 +1,4 @@
 #pragma once
-
 #include <webgpu/webgpu_cpp.h>
 #include <glm/glm.hpp>
 #include <memory>
