@@ -21,8 +21,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -yq ninja-build
       - name: Build
         run: |
-          cmake --preset default
-          cmake --build --preset default
+          cmake --preset Release
+          cmake --build --preset Release
           mkdir -p _site
           mv build/out/* _site/
       - name: Upload artifact

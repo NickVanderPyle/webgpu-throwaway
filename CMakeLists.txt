@@ -1,8 +1,8 @@
 #[[
     Configure with preset:
-        cmake --preset default
+        cmake --preset Debug
     Build with preset:
-        cmake --build --preset default
+        cmake --build --preset Debug
     Clean with preset (delete the build directory):
         cmake --build ./build --target clean-all
 ]]
