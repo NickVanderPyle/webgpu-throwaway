@@ -10,7 +10,6 @@
             "name": "base",
             "hidden": true,
             "binaryDir": "${sourceDir}/build",
-            "generator": "Ninja",
             "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
         },
         {
