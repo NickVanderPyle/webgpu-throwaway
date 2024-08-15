@@ -11,21 +11,33 @@ constexpr size_t offsetOfMember(U T::*member) {
     return (char *)&((T *)nullptr->*member) - (char *)nullptr;
 }
 
-RectangleShader::RectangleShader(size_t maxRectangleCount) : maxRectangleCount(maxRectangleCount) {}
+struct VertexAttributes {
+    glm::vec3 position;
+    glm::vec3 color;
+};
+
+RectangleShader::RectangleShader(size_t maxRectangleCount) : maxRectangleCount(maxRectangleCount) {
+}
 
 bool RectangleShader::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) {
     this->shaderModule = ResourceManager::LoadShaderModule("/src/shaders/rectangle.wgsl", device);
 
-    // VertexAttributes::positiom
-    std::array<wgpu::VertexAttribute, 1> vertexAttribs{
+    std::array<wgpu::VertexAttribute, 2> vertexAttribs{
+        // VertexAttributes::positiom
         wgpu::VertexAttribute{
             .format = wgpu::VertexFormat::Float32x3,
-            .offset = 0,
+            .offset = offsetOfMember(&VertexAttributes::position),
             .shaderLocation = 0,
+        },
+        // VertexAttributes::color
+        wgpu::VertexAttribute{
+            .format = wgpu::VertexFormat::Float32x3,
+            .offset = offsetOfMember(&VertexAttributes::color),
+            .shaderLocation = 1,
         },
     };
     wgpu::VertexBufferLayout vertexBufferLayout{
-        .arrayStride = sizeof(glm::vec3),
+        .arrayStride = sizeof(VertexAttributes),
         .stepMode = wgpu::VertexStepMode::Vertex,
         .attributeCount = (uint32_t)vertexAttribs.size(),
         .attributes = vertexAttribs.data(),
@@ -37,7 +49,7 @@ bool RectangleShader::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &de
         instanceAttribs[i] = wgpu::VertexAttribute{
             .format = wgpu::VertexFormat::Float32x4,
             .offset = sizeof(glm::vec4) * i,  // glm::mat4x4, each row is vec4
-            .shaderLocation = 1 + i,
+            .shaderLocation = 2 + i,
         };
     }
     wgpu::VertexBufferLayout instanceBufferLayout{
@@ -116,24 +128,24 @@ bool RectangleShader::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &de
 }
 
 bool RectangleShader::InitVertexBuffer(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Queue> &queue) {
-    std::array<glm::vec3, 4> quadVertices = {
-        glm::vec3(-1.0f, 1.0f, 0.0f),   // Top-left
-        glm::vec3(-1.0f, -1.0f, 0.0f),  // Bottom-left
-        glm::vec3(1.0f, 1.0f, 0.0f),    // Top-right
-        glm::vec3(1.0f, -1.0f, 0.0f)    // Bottom-right
+    std::array<VertexAttributes, 4> quadVertices = {
+        VertexAttributes{.position = glm::vec3(-1.0f, 1.0f, 0.0f), .color = glm::vec3(1.0f, 0.0f, 0.0f)},   // Top-left
+        VertexAttributes{.position = glm::vec3(-1.0f, -1.0f, 0.0f), .color = glm::vec3(0.0f, 1.0f, 0.0f)},  // Bottom-left
+        VertexAttributes{.position = glm::vec3(1.0f, 1.0f, 0.0f), .color = glm::vec3(0.0f, 0.0f, 1.0f)},    // Top-right
+        VertexAttributes{.position = glm::vec3(1.0f, -1.0f, 0.0f), .color = glm::vec3(1.0f, 0.0f, 1.0f)}    // Bottom-right
     };
 
     wgpu::BufferDescriptor bufferDesc{
         .label = "rectangle_vertex_buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
-        .size = quadVertices.size() * sizeof(glm::vec3),
+        .size = quadVertices.size() * sizeof(VertexAttributes),
         .mappedAtCreation = false,
     };
 
     this->vertexBuffer = std::make_unique<wgpu::Buffer>(device->CreateBuffer(&bufferDesc));
     if (this->vertexBuffer == nullptr) return false;
 
-    queue->WriteBuffer(this->vertexBuffer->Get(), 0, quadVertices.data(), quadVertices.size() * sizeof(glm::vec3));
+    queue->WriteBuffer(this->vertexBuffer->Get(), 0, quadVertices.data(), quadVertices.size() * sizeof(VertexAttributes));
 
     return true;
 }
