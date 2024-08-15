@@ -11,6 +11,11 @@ constexpr size_t offsetOfMember(U T::*member) {
     return (char *)&((T *)nullptr->*member) - (char *)nullptr;
 }
 
+struct VertexAttributes {
+    glm::vec3 position;
+    glm::vec3 color;
+};
+
 Line3DShader::Line3DShader(size_t maxLineCount) : maxLineCount(maxLineCount) {}
 
 bool Line3DShader::InitBindGroupLayout(const std::unique_ptr<wgpu::Device> &device) {
@@ -43,7 +48,7 @@ bool Line3DShader::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &devic
         // Position attribute
         wgpu::VertexAttribute{
             .format = wgpu::VertexFormat::Float32x3,
-            .offset = 0,
+            .offset = offsetOfMember(&VertexAttributes::position),
             .shaderLocation = 0,
         },
         // Color attribute

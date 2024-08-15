@@ -10,11 +10,6 @@ struct Line3D {
 
 class Line3DShader {
    private:
-    struct VertexAttributes {
-        glm::vec3 position;
-        glm::vec3 color;
-    };
-
     // Should be the same as in the shader.
     struct MyUniforms {
         glm::mat4x4 modelMatrix;
