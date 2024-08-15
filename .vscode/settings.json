@@ -7,7 +7,7 @@
     "livePreview.serverKeepAliveAfterEmbeddedPreviewClose": 0,
     "cmake.useCMakePresets": "always",
     "cmake.configureOnOpen": true,
-    "cmake.options.statusBarVisibility": "icon",
+    "cmake.options.statusBarVisibility": "hidden",
     "C_Cpp.autoAddFileAssociations": false,
     "C_Cpp.codeAnalysis.runAutomatically": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
