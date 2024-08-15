@@ -16,7 +16,7 @@
 				"ms-vscode.live-server",
 				"ms-vscode.cpptools-extension-pack",
 				"ms-azuretools.vscode-docker",
-				"polymeilex.wgsl"
+				"wgsl-analyzer.wgsl-analyzer"
 			]
 		}
 	}

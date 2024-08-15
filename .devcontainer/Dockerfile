@@ -12,7 +12,6 @@ RUN apt-get update \
     build-essential \
     ca-certificates \
     python3 \
-    ninja-build \
     # Needed for rustup install
     curl
 
@@ -68,4 +67,4 @@ RUN echo "## Aggressive optimization: Remove debug symbols" \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
     && echo '. "$HOME/.cargo/env"' >> $HOME/.bashrc \
     && . "$HOME/.cargo/env"
-RUN $HOME/.cargo/bin/cargo install cargo-wgsl
+RUN $HOME/.cargo/bin/cargo install --git https://github.com/wgsl-analyzer/wgsl-analyzer wgsl_analyzer
