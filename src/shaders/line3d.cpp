@@ -1,9 +1,9 @@
-#include "shaderPipeline.hpp"
+#include "line3d.hpp"
 #include <cstddef>
+#include "../resourceManager.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
-#include "resourceManager.hpp"
 
 // offsetof from std lib has trouble with VSCode intellisense, override.
 template <typename T, typename U>
@@ -11,7 +11,9 @@ constexpr size_t offsetOfMember(U T::*member) {
     return (char *)&((T *)nullptr->*member) - (char *)nullptr;
 }
 
-bool ShaderPipeline::InitBindGroupLayout(const std::unique_ptr<wgpu::Device> &device) {
+Line3DShader::Line3DShader(size_t maxLineCount) : maxLineCount(maxLineCount) {}
+
+bool Line3DShader::InitBindGroupLayout(const std::unique_ptr<wgpu::Device> &device) {
     std::array<wgpu::BindGroupLayoutEntry, 1> bindingLayoutEntries{
         wgpu::BindGroupLayoutEntry{
             .binding = 0,
@@ -25,6 +27,7 @@ bool ShaderPipeline::InitBindGroupLayout(const std::unique_ptr<wgpu::Device> &de
     };
 
     wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc{
+        .label = "line3d",
         .entryCount = (uint32_t)bindingLayoutEntries.size(),
         .entries = bindingLayoutEntries.data(),
     };
@@ -33,32 +36,26 @@ bool ShaderPipeline::InitBindGroupLayout(const std::unique_ptr<wgpu::Device> &de
     return this->bindGroupLayout != nullptr;
 }
 
-bool ShaderPipeline::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) {
-    this->shaderModule = ResourceManager::LoadShaderModule("/assets/shaders/vertex_shader.wgsl", device);
+bool Line3DShader::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) {
+    this->shaderModule = ResourceManager::LoadShaderModule("/src/shaders/line3d.wgsl", device);
 
-    std::array<wgpu::VertexAttribute, 3> vertexAttribs{
+    std::array<wgpu::VertexAttribute, 2> vertexAttribs{
         // Position attribute
         wgpu::VertexAttribute{
             .format = wgpu::VertexFormat::Float32x3,
             .offset = 0,
             .shaderLocation = 0,
         },
-        // Normal attribute
-        wgpu::VertexAttribute{
-            .format = wgpu::VertexFormat::Float32x3,
-            .offset = offsetOfMember(&ResourceManager::VertexAttributes::normal),
-            .shaderLocation = 1,
-        },
         // Color attribute
         wgpu::VertexAttribute{
             .format = wgpu::VertexFormat::Float32x3,
-            .offset = offsetOfMember(&ResourceManager::VertexAttributes::color),
-            .shaderLocation = 2,
+            .offset = offsetOfMember(&VertexAttributes::color),
+            .shaderLocation = 1,
         },
     };
 
     wgpu::VertexBufferLayout vertexBufferLayout{
-        .arrayStride = sizeof(ResourceManager::VertexAttributes),
+        .arrayStride = sizeof(VertexAttributes),
         .stepMode = wgpu::VertexStepMode::Vertex,
         .attributeCount = (uint32_t)vertexAttribs.size(),
         .attributes = vertexAttribs.data(),
@@ -100,6 +97,7 @@ bool ShaderPipeline::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &dev
     };
 
     wgpu::RenderPipelineDescriptor pipelineDesc{
+        .label = "line3d",
         .vertex = wgpu::VertexState{
             .module = this->shaderModule->Get(),
             .entryPoint = "vs_main",
@@ -109,7 +107,7 @@ bool ShaderPipeline::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &dev
             .buffers = &vertexBufferLayout,
         },
         .primitive = wgpu::PrimitiveState{
-            .topology = wgpu::PrimitiveTopology::TriangleList,
+            .topology = wgpu::PrimitiveTopology::LineList,
             .stripIndexFormat = wgpu::IndexFormat::Undefined,
             .frontFace = wgpu::FrontFace::CCW,
             .cullMode = wgpu::CullMode::None,
@@ -124,6 +122,7 @@ bool ShaderPipeline::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &dev
     };
 
     wgpu::PipelineLayoutDescriptor layoutDesc{
+        .label = "line3d",
         .bindGroupLayoutCount = 1,
         .bindGroupLayouts = this->bindGroupLayout.get(),
     };
@@ -135,16 +134,16 @@ bool ShaderPipeline::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &dev
     return this->pipeline != nullptr;
 }
 
-bool ShaderPipeline::InitUniforms(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Queue> &queue, const uint32_t width, const uint32_t height) {
-    wgpu::BufferDescriptor bufferDesc;
-    bufferDesc.size = sizeof(MyUniforms);
-    bufferDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform;
-    bufferDesc.mappedAtCreation = false;
+bool Line3DShader::InitUniforms(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Queue> &queue, const uint32_t width, const uint32_t height) {
+    wgpu::BufferDescriptor bufferDesc{
+        .label = "line3d",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+        .size = sizeof(MyUniforms),
+        .mappedAtCreation = false,
+    };
     this->uniformBuffer = std::make_unique<wgpu::Buffer>(device->CreateBuffer(&bufferDesc));
 
-    if (this->uniformBuffer == nullptr) {
-        return false;
-    }
+    if (this->uniformBuffer == nullptr) return false;
 
     this->uniforms.modelMatrix = glm::mat4x4(1.0f);
     this->uniforms.viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 20.0f),  // Camera position in World Space
@@ -157,7 +156,7 @@ bool ShaderPipeline::InitUniforms(const std::unique_ptr<wgpu::Device> &device, c
     return true;
 }
 
-bool ShaderPipeline::InitBindGroup(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Buffer> &uniformBuffer, const std::unique_ptr<wgpu::BindGroupLayout> &bindGroupLayout) {
+bool Line3DShader::InitBindGroup(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Buffer> &uniformBuffer, const std::unique_ptr<wgpu::BindGroupLayout> &bindGroupLayout) {
     std::array<wgpu::BindGroupEntry, 1> bindings = {
         wgpu::BindGroupEntry{
             .binding = 0,
@@ -177,22 +176,36 @@ bool ShaderPipeline::InitBindGroup(const std::unique_ptr<wgpu::Device> &device, 
     return this->bindGroup != nullptr;
 }
 
-void ShaderPipeline::Resize(const uint32_t width, const uint32_t height) {
+bool Line3DShader::InitVertexBuffer(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Queue> &queue) {
+    wgpu::BufferDescriptor bufferDesc{
+        .label = "line3d",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+        .size = this->maxLineCount * sizeof(Line3D),
+        .mappedAtCreation = false,
+    };
+    this->vertexBuffer = std::make_unique<wgpu::Buffer>(device->CreateBuffer(&bufferDesc));
+    return this->vertexBuffer != nullptr;
+}
+
+void Line3DShader::Resize(const uint32_t width, const uint32_t height) {
     this->uniforms.projectionMatrix = glm::perspective(glm::radians(75.0f), float(width) / float(height), 0.1f, 1000.0f);
 }
 
-bool ShaderPipeline::Init(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const std::unique_ptr<wgpu::Queue> &queue, const uint32_t width, const uint32_t height) {
+bool Line3DShader::Init(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const std::unique_ptr<wgpu::Queue> &queue, const uint32_t width, const uint32_t height) {
     if (!this->InitBindGroupLayout(device)) return false;
     if (!this->InitRenderPipeline(device, swapChainFormat, depthTextureFormat)) return false;
     if (!this->InitUniforms(device, queue, width, height)) return false;
     if (!this->InitBindGroup(device, this->uniformBuffer, this->bindGroupLayout)) return false;
-
-    this->model = Model::MakeModel(device, queue);
-
+    if (!this->InitVertexBuffer(device, queue)) return false;
     return true;
 }
 
-void ShaderPipeline::Render(const std::unique_ptr<wgpu::RenderPassEncoder> &renderPass, const std::unique_ptr<wgpu::Queue> &queue, float time) {
+void Line3DShader::UpdateVertexBuffer(const std::unique_ptr<wgpu::Queue> &queue, std::vector<Line3D> &lines) {
+    queue->WriteBuffer(this->vertexBuffer->Get(), 0, lines.data(), lines.size() * sizeof(Line3D));
+    this->drawLineCount = lines.size();
+}
+
+void Line3DShader::Render(const std::unique_ptr<wgpu::RenderPassEncoder> &renderPass, const std::unique_ptr<wgpu::Queue> &queue, float time) {
     MyUniforms uniforms = this->uniforms;
     uniforms.time = time;
 
@@ -206,12 +219,10 @@ void ShaderPipeline::Render(const std::unique_ptr<wgpu::RenderPassEncoder> &rend
     this->uniforms.modelMatrix = rotationMatrix;  // glm::mat4x4(1.0f);
 
     renderPass->SetPipeline(this->pipeline->Get());
-
-    renderPass->SetVertexBuffer(0, this->model->vertexBuffer->Get(), 0, this->model->vertexCount * sizeof(VertexAttributes));
-    renderPass->SetIndexBuffer(this->model->indexBuffer->Get(), wgpu::IndexFormat::Uint32, 0, this->model->indexCount * sizeof(uint32_t));
+    renderPass->SetVertexBuffer(0, this->vertexBuffer->Get(), 0, this->drawLineCount * sizeof(Line3D));
 
     uint32_t dynamicOffset = 0;
     queue->WriteBuffer(this->uniformBuffer->Get(), dynamicOffset, &uniforms, sizeof(MyUniforms));
     renderPass->SetBindGroup(0, this->bindGroup->Get(), 1, &dynamicOffset);
-    renderPass->DrawIndexed(this->model->indexCount);
+    renderPass->Draw(this->drawLineCount * 2, 1, 0, 0);
 }

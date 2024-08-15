@@ -1,6 +1,8 @@
 #include "renderer.hpp"
 #include <emscripten/emscripten.h>
 #include <webgpu/webgpu_cpp.h>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/glm.hpp>
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -100,6 +102,7 @@ bool Renderer::InitQueue(const std::unique_ptr<wgpu::Device> &device) {
 
 bool Renderer::InitDepthBuffer(const std::unique_ptr<wgpu::Device> &device, const uint32_t width, const uint32_t height) {
     wgpu::TextureDescriptor depthTextureDesc{
+        .label = "Renderer",
         .usage = wgpu::TextureUsage::RenderAttachment,
         .dimension = wgpu::TextureDimension::e2D,
         .size = {this->width, this->height, 1},
@@ -116,6 +119,7 @@ bool Renderer::InitDepthBuffer(const std::unique_ptr<wgpu::Device> &device, cons
     }
 
     wgpu::TextureViewDescriptor depthTextureViewDesc{
+        .label = "Renderer",
         .format = this->depthTextureFormat,
         .dimension = wgpu::TextureViewDimension::e2D,
         .baseMipLevel = 0,
@@ -134,9 +138,12 @@ bool Renderer::InitDepthBuffer(const std::unique_ptr<wgpu::Device> &device, cons
 }
 
 bool Renderer::InitSurface(const std::unique_ptr<wgpu::Instance> &instance, const std::unique_ptr<wgpu::Adapter> &adapter) {
-    wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
+    wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvasDesc;
     canvasDesc.selector = "#canvas";
-    wgpu::SurfaceDescriptor surfaceDesc{.nextInChain = &canvasDesc};
+    wgpu::SurfaceDescriptor surfaceDesc{
+        .nextInChain = &canvasDesc,
+        .label = "Renderer",
+    };
     this->surface = std::make_unique<wgpu::Surface>(instance->CreateSurface(&surfaceDesc));
 
     if (!this->surface) {
@@ -151,6 +158,7 @@ bool Renderer::InitSurface(const std::unique_ptr<wgpu::Instance> &instance, cons
 
 bool Renderer::InitSwapChain(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Surface> &surface, const wgpu::TextureFormat swapChainFormat, const uint32_t width, const uint32_t height) {
     wgpu::SwapChainDescriptor swapChainDesc{
+        .label = "Renderer",
         .usage = wgpu::TextureUsage::RenderAttachment,
         .format = swapChainFormat,
         .width = width,
@@ -178,7 +186,8 @@ bool Renderer::Initialize() {
     if (!this->InitQueue(this->device)) return false;
     if (!this->InitDepthBuffer(this->device, this->width, this->height)) return false;
 
-    if (!this->shaderPipeline.Init(this->device, this->swapChainFormat, this->depthTextureFormat, this->queue, this->width, this->height)) return false;
+    std::cout << "swapChainFormat:" << static_cast<uint32_t>(this->swapChainFormat) << " depthTextureFormat:" << static_cast<uint32_t>(this->depthTextureFormat) << std::endl;
+    if (!this->graphics.InitShaders(this->device, this->swapChainFormat, this->depthTextureFormat, this->queue, this->width, this->height)) return false;
 
     return true;
 }
@@ -188,7 +197,7 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
     this->height = height;
     this->InitSwapChain(this->device, this->surface, this->swapChainFormat, width, height);
     this->InitDepthBuffer(this->device, width, height);
-    this->shaderPipeline.Resize(width, height);
+    this->graphics.Resize(width, height);
 }
 
 void Renderer::Render(float time) {
@@ -221,6 +230,7 @@ void Renderer::Render(float time) {
             .stencilReadOnly = true,
         };
         wgpu::RenderPassDescriptor renderPassDesc{
+            .label = "Renderer",
             .colorAttachmentCount = 1,
             .colorAttachments = &renderPassColorAttachment,
             .depthStencilAttachment = &renderPassDepthStencilAttachment,
@@ -228,7 +238,24 @@ void Renderer::Render(float time) {
         };
 
         auto renderPass = std::make_unique<wgpu::RenderPassEncoder>(encoder.BeginRenderPass(&renderPassDesc));
-        this->shaderPipeline.Render(renderPass, this->queue, time);
+
+        this->angle++;
+        float angleTmp = 0;
+        for (int x = -100; x < 100; x += 10) {
+            for (int y = -100; y < 100; y += 10) {
+                glm::mat4x4 transform = glm::mat4x4(1.0f);
+                transform = glm::translate(transform, glm::vec3(x, y, 0));                                       // position
+                transform = glm::rotate(transform, glm::radians(this->angle + angleTmp++), glm::vec3(1, 0, 0));  // rotation x
+                transform = glm::rotate(transform, glm::radians(this->angle + angleTmp++), glm::vec3(0, 1, 0));  // rotation y
+                transform = glm::rotate(transform, glm::radians(this->angle + angleTmp++), glm::vec3(0, 0, 1));  // rotation z
+                transform = glm::scale(transform, glm::vec3(3.0f, 1.0f, 2.0f));                                  // scale
+
+                this->graphics.DrawRect(transform);
+            }
+        }
+
+        this->graphics.Render(renderPass, this->queue, time);
+
         renderPass->End();
     }
 

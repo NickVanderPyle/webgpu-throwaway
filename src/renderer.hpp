@@ -2,7 +2,7 @@
 #include <webgpu/webgpu_cpp.h>
 #include <glm/glm.hpp>
 #include <memory>
-#include "shaderPipeline.hpp"
+#include "graphics.hpp"
 
 class Renderer {
    private:
@@ -20,7 +20,9 @@ class Renderer {
     std::unique_ptr<wgpu::TextureView> depthTextureView;
     std::unique_ptr<wgpu::SwapChain> swapChain;
 
-    ShaderPipeline shaderPipeline;
+    Graphics graphics;
+
+    float angle = 0;
 
    public:
     Renderer() = default;
