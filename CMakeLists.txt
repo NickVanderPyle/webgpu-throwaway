@@ -33,6 +33,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
 file(GLOB_RECURSE APP_HEADERS CONFIGURE_DEPENDS "${SRC_DIR}/*.hpp")
 file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS "${SRC_DIR}/*.cpp")
+file(GLOB_RECURSE APP_SHADERS CONFIGURE_DEPENDS "${SRC_DIR}/*.wgsl")
 
 #Get GLM from GitHub
 include(FetchContent)
@@ -51,6 +52,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 execute_process(COMMAND em++ --cflags OUTPUT_VARIABLE EM_CFLAGS)
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "${EM_CFLAGS}")
 
+
+set(PRELOAD_LINK_OPTIONS "")
+foreach(shader_path ${APP_SHADERS})
+    file(RELATIVE_PATH rel_path "${CMAKE_SOURCE_DIR}" ${shader_path})
+    list(APPEND PRELOAD_LINK_OPTIONS "--preload-file=${shader_path}@${rel_path}")
+endforeach()
+
+
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
 target_link_options(${PROJECT_NAME} PRIVATE
     -fsanitize=undefined -sSAFE_HEAP=1 -sASSERTIONS=1 -Wno-limited-postlink-optimizations
@@ -59,7 +68,7 @@ target_link_options(${PROJECT_NAME} PRIVATE
     -sUSE_GLFW=3
     -sASYNCIFY
     --shell-file=${CMAKE_SOURCE_DIR}/template/shell.html
-    --preload-file=${CMAKE_SOURCE_DIR}/assets@assets/
+    ${PRELOAD_LINK_OPTIONS}
 )
 
 
