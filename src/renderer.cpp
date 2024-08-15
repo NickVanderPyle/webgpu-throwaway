@@ -241,14 +241,17 @@ void Renderer::Render(float time) {
 
         this->angle++;
         float angleTmp = 0;
-        for (int x = -100; x < 100; x += 10) {
+        for (int x = -120; x < 120; x += 10) {
             for (int y = -100; y < 100; y += 10) {
                 glm::mat4x4 transform = glm::mat4x4(1.0f);
                 transform = glm::translate(transform, glm::vec3(x, y, 0));                                       // position
                 transform = glm::rotate(transform, glm::radians(this->angle + angleTmp++), glm::vec3(1, 0, 0));  // rotation x
+                angleTmp++;
                 transform = glm::rotate(transform, glm::radians(this->angle + angleTmp++), glm::vec3(0, 1, 0));  // rotation y
+                angleTmp++;
                 transform = glm::rotate(transform, glm::radians(this->angle + angleTmp++), glm::vec3(0, 0, 1));  // rotation z
-                transform = glm::scale(transform, glm::vec3(3.0f, 1.0f, 2.0f));                                  // scale
+                angleTmp++;
+                transform = glm::scale(transform, glm::vec3(5.0f, 5.0f, 5.0f));  // scale
 
                 this->graphics.DrawRect(transform);
             }
