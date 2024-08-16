@@ -9,14 +9,17 @@
 #include <utility>
 
 void Renderer::GetCanvasSize(uint32_t &width, uint32_t &height) {
-    EM_ASM({
-        var canvas = document.getElementById('canvas');
-        var rect = canvas.getBoundingClientRect();
-        setValue($0, rect.width, 'i32');
-        setValue($1, rect.height, 'i32'); }, &width, &height);
+    EM_ASM(
+        {
+            var canvas = document.getElementById('canvas');
+            var rect = canvas.getBoundingClientRect();
+            setValue($0, rect.width, 'i32');
+            setValue($1, rect.height, 'i32');
+        },
+        &width, &height);
 }
 
-bool Renderer::InitInstance() {
+auto Renderer::InitInstance() -> bool {
     this->instance = std::make_unique<wgpu::Instance>(wgpu::CreateInstance());
     if (!this->instance) {
         std::cerr << "Cannot initialize WebGPU Instance" << std::endl;
@@ -25,16 +28,16 @@ bool Renderer::InitInstance() {
     return true;
 }
 
-bool Renderer::InitAdapter(const std::unique_ptr<wgpu::Instance> &instance) {
+auto Renderer::InitAdapter(const wgpu::Instance &instance) -> bool {
     struct UserData {
         std::unique_ptr<wgpu::Adapter> adapter;
         bool requestEnded = false;
     } userData;
 
-    instance->RequestAdapter(
+    instance.RequestAdapter(
         nullptr,
         [](WGPURequestAdapterStatus status, WGPUAdapter cAdapter, const char *message, void *pUserData) {
-            UserData &userData = *reinterpret_cast<UserData *>(pUserData);
+            UserData &userData = *static_cast<UserData *>(pUserData);
 
             if (status == WGPURequestAdapterStatus::WGPURequestAdapterStatus_Success) {
                 userData.adapter = std::make_unique<wgpu::Adapter>(wgpu::Adapter::Acquire(cAdapter));
@@ -58,16 +61,16 @@ bool Renderer::InitAdapter(const std::unique_ptr<wgpu::Instance> &instance) {
     return static_cast<bool>(this->adapter);
 }
 
-bool Renderer::InitDevice(const std::unique_ptr<wgpu::Adapter> &adapter) {
+auto Renderer::InitDevice(const wgpu::Adapter &adapter) -> bool {
     struct UserData {
         std::unique_ptr<wgpu::Device> device;
         bool requestEnded = false;
     } userData;
 
-    adapter->RequestDevice(
+    adapter.RequestDevice(
         nullptr,
         [](WGPURequestDeviceStatus status, WGPUDevice cDevice, const char *message, void *pUserData) {
-            UserData &userData = *reinterpret_cast<UserData *>(pUserData);
+            UserData &userData = *static_cast<UserData *>(pUserData);
 
             if (status == WGPURequestDeviceStatus::WGPURequestDeviceStatus_Success) {
                 userData.device = std::make_unique<wgpu::Device>(wgpu::Device::Acquire(cDevice));
@@ -91,8 +94,8 @@ bool Renderer::InitDevice(const std::unique_ptr<wgpu::Adapter> &adapter) {
     return static_cast<bool>(this->device);
 }
 
-bool Renderer::InitQueue(const std::unique_ptr<wgpu::Device> &device) {
-    this->queue = std::make_unique<wgpu::Queue>(device->GetQueue());
+auto Renderer::InitQueue(const wgpu::Device &device) -> bool {
+    this->queue = std::make_unique<wgpu::Queue>(device.GetQueue());
     if (!this->queue) {
         std::cerr << "Cannot initialize WebGPU Queue" << std::endl;
         return false;
@@ -100,7 +103,7 @@ bool Renderer::InitQueue(const std::unique_ptr<wgpu::Device> &device) {
     return true;
 }
 
-bool Renderer::InitDepthBuffer(const std::unique_ptr<wgpu::Device> &device, const uint32_t width, const uint32_t height) {
+auto Renderer::InitDepthBuffer(const wgpu::Device &device) -> bool {
     wgpu::TextureDescriptor depthTextureDesc{
         .label = "Renderer",
         .usage = wgpu::TextureUsage::RenderAttachment,
@@ -112,7 +115,7 @@ bool Renderer::InitDepthBuffer(const std::unique_ptr<wgpu::Device> &device, cons
         .viewFormatCount = 1,
         .viewFormats = &this->depthTextureFormat,
     };
-    this->depthTexture = std::make_unique<wgpu::Texture>(device->CreateTexture(&depthTextureDesc));
+    this->depthTexture = std::make_unique<wgpu::Texture>(device.CreateTexture(&depthTextureDesc));
     if (!this->depthTexture) {
         std::cerr << "Cannot initialize WebGPU DepthTexture" << std::endl;
         return false;
@@ -137,26 +140,26 @@ bool Renderer::InitDepthBuffer(const std::unique_ptr<wgpu::Device> &device, cons
     return true;
 }
 
-bool Renderer::InitSurface(const std::unique_ptr<wgpu::Instance> &instance, const std::unique_ptr<wgpu::Adapter> &adapter) {
+auto Renderer::InitSurface(const wgpu::Instance &instance, const wgpu::Adapter &adapter) -> bool {
     wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvasDesc;
     canvasDesc.selector = "#canvas";
     wgpu::SurfaceDescriptor surfaceDesc{
         .nextInChain = &canvasDesc,
         .label = "Renderer",
     };
-    this->surface = std::make_unique<wgpu::Surface>(instance->CreateSurface(&surfaceDesc));
+    this->surface = std::make_unique<wgpu::Surface>(instance.CreateSurface(&surfaceDesc));
 
     if (!this->surface) {
         std::cerr << "Cannot initialize WebGPU Surface" << std::endl;
         return false;
     }
 
-    this->swapChainFormat = this->surface->GetPreferredFormat(adapter->Get());
+    this->swapChainFormat = this->surface->GetPreferredFormat(adapter.Get());
 
     return true;
 }
 
-bool Renderer::InitSwapChain(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Surface> &surface, const wgpu::TextureFormat swapChainFormat, const uint32_t width, const uint32_t height) {
+auto Renderer::InitSwapChain(const wgpu::Device &device, const wgpu::Surface &surface, const wgpu::TextureFormat swapChainFormat, const uint32_t width, const uint32_t height) -> bool {
     wgpu::SwapChainDescriptor swapChainDesc{
         .label = "Renderer",
         .usage = wgpu::TextureUsage::RenderAttachment,
@@ -166,7 +169,7 @@ bool Renderer::InitSwapChain(const std::unique_ptr<wgpu::Device> &device, const 
         .presentMode = wgpu::PresentMode::Fifo,
     };
 
-    this->swapChain = std::make_unique<wgpu::SwapChain>(device->CreateSwapChain(surface->Get(), &swapChainDesc));
+    this->swapChain = std::make_unique<wgpu::SwapChain>(device.CreateSwapChain(surface.Get(), &swapChainDesc));
 
     if (!this->swapChain) {
         std::cerr << "Cannot initialize WebGPU SwapChain" << std::endl;
@@ -176,31 +179,28 @@ bool Renderer::InitSwapChain(const std::unique_ptr<wgpu::Device> &device, const 
     return true;
 }
 
-bool Renderer::Initialize() {
+auto Renderer::Initialize() -> bool {
     this->GetCanvasSize(this->width, this->height);
-    if (!this->InitInstance()) return false;
-    if (!this->InitAdapter(this->instance)) return false;
-    if (!this->InitDevice(this->adapter)) return false;
-    if (!this->InitSurface(this->instance, this->adapter)) return false;
-    if (!this->InitSwapChain(this->device, this->surface, this->swapChainFormat, this->width, this->height)) return false;
-    if (!this->InitQueue(this->device)) return false;
-    if (!this->InitDepthBuffer(this->device, this->width, this->height)) return false;
 
-    std::cout << "swapChainFormat:" << static_cast<uint32_t>(this->swapChainFormat) << " depthTextureFormat:" << static_cast<uint32_t>(this->depthTextureFormat) << std::endl;
-    if (!this->graphics.InitShaders(this->device, this->swapChainFormat, this->depthTextureFormat, this->queue, this->width, this->height)) return false;
-
-    return true;
+    return this->InitInstance()
+        && this->InitAdapter(this->instance->Get())
+        && this->InitDevice(this->adapter->Get())
+        && this->InitSurface(this->instance->Get(), this->adapter->Get())
+        && this->InitSwapChain(this->device->Get(), this->surface->Get(), this->swapChainFormat, this->width, this->height)
+        && this->InitQueue(this->device->Get())
+        && this->InitDepthBuffer(this->device->Get())
+        && this->graphics.InitShaders(this->device->Get(), this->swapChainFormat, this->depthTextureFormat, this->queue->Get(), this->width, this->height);
 }
 
-void Renderer::Resize(uint32_t width, uint32_t height) {
+void Renderer::Resize(const uint32_t width, const uint32_t height) {
     this->width = width;
     this->height = height;
-    this->InitSwapChain(this->device, this->surface, this->swapChainFormat, width, height);
-    this->InitDepthBuffer(this->device, width, height);
+    this->InitSwapChain(this->device->Get(), this->surface->Get(), this->swapChainFormat, width, height);
+    this->InitDepthBuffer(this->device->Get());
     this->graphics.Resize(width, height);
 }
 
-void Renderer::Render(float time) {
+void Renderer::Render(const float time) {
     wgpu::TextureView nextTexture = this->swapChain->GetCurrentTextureView();
     if (!nextTexture) {
         std::cerr << "Failed to get nextTexture." << std::endl;
@@ -210,7 +210,6 @@ void Renderer::Render(float time) {
     wgpu::CommandEncoder encoder = this->device->CreateCommandEncoder();
 
     {  // Render pass
-
         wgpu::RenderPassColorAttachment renderPassColorAttachment{
             .view = nextTexture,
             .loadOp = wgpu::LoadOp::Clear,
@@ -237,13 +236,13 @@ void Renderer::Render(float time) {
             .timestampWrites = nullptr,
         };
 
-        auto renderPass = std::make_unique<wgpu::RenderPassEncoder>(encoder.BeginRenderPass(&renderPassDesc));
+        auto renderPass = encoder.BeginRenderPass(&renderPassDesc);
 
         this->angle++;
         float angleTmp = 0;
         for (int x = -120; x < 120; x += 10) {
             for (int y = -100; y < 100; y += 10) {
-                glm::mat4x4 transform = glm::mat4x4(1.0f);
+                auto transform = glm::mat4x4(1.0f);
                 transform = glm::translate(transform, glm::vec3(x, y, 0));                                       // position
                 transform = glm::rotate(transform, glm::radians(this->angle + angleTmp++), glm::vec3(1, 0, 0));  // rotation x
                 angleTmp++;
@@ -257,9 +256,9 @@ void Renderer::Render(float time) {
             }
         }
 
-        this->graphics.Render(renderPass, this->queue, time);
+        this->graphics.Render(renderPass, this->queue->Get(), time);
 
-        renderPass->End();
+        renderPass.End();
     }
 
     wgpu::CommandBuffer command = encoder.Finish();

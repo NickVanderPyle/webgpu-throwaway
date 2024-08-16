@@ -8,6 +8,7 @@ struct Line3D {
     glm::vec3 end;
 };
 
+// todo: irritate sonarlint.
 class Line3DShader {
    private:
     // Should be the same as in the shader.
@@ -22,17 +23,17 @@ class Line3DShader {
     static_assert(sizeof(MyUniforms) % 16 == 0);
 
    public:
-    Line3DShader(size_t maxLineCount);
+    Line3DShader(const size_t maxLineCount);
     ~Line3DShader() = default;
     Line3DShader(const Line3DShader &) = delete;
-    Line3DShader &operator=(const Line3DShader &) = delete;
     Line3DShader(Line3DShader &&) = delete;
-    Line3DShader &operator=(Line3DShader &&) = delete;
+    auto operator=(const Line3DShader &) -> Line3DShader & = delete;
+    auto operator=(Line3DShader &&) -> Line3DShader & = delete;
 
-    bool Init(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const std::unique_ptr<wgpu::Queue> &queue, const uint32_t width, const uint32_t height);
+    auto Init(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue, const uint32_t width, const uint32_t height) -> bool;
     void Resize(const uint32_t width, const uint32_t height);
-    void UpdateVertexBuffer(const std::unique_ptr<wgpu::Queue> &queue, std::vector<Line3D> &lines);
-    void Render(const std::unique_ptr<wgpu::RenderPassEncoder> &renderPass, const std::unique_ptr<wgpu::Queue> &queue, float time);
+    void UpdateVertexBuffer(const wgpu::Queue &queue, const std::vector<Line3D> &lines);
+    void Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue &queue, const float time);
 
    private:
     std::unique_ptr<wgpu::ShaderModule> shaderModule;
@@ -40,14 +41,14 @@ class Line3DShader {
     std::unique_ptr<wgpu::RenderPipeline> pipeline;
     std::unique_ptr<wgpu::Buffer> uniformBuffer;
     std::unique_ptr<wgpu::BindGroup> bindGroup;
-    MyUniforms uniforms;
+    MyUniforms uniforms = MyUniforms();
     std::unique_ptr<wgpu::Buffer> vertexBuffer;
     size_t drawLineCount = 0;
     size_t maxLineCount;
 
-    bool InitBindGroupLayout(const std::unique_ptr<wgpu::Device> &device);
-    bool InitRenderPipeline(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat);
-    bool InitUniforms(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Queue> &queue, const uint32_t width, const uint32_t height);
-    bool InitBindGroup(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Buffer> &uniformBuffer, const std::unique_ptr<wgpu::BindGroupLayout> &bindGroupLayout);
-    bool InitVertexBuffer(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Queue> &queue);
+    auto InitBindGroupLayout(const wgpu::Device &device) -> bool;
+    auto InitRenderPipeline(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) -> bool;
+    auto InitUniforms(const wgpu::Device &device, const wgpu::Queue &queue, const uint32_t width, const uint32_t height) -> bool;
+    auto InitBindGroup(const wgpu::Device &device, const wgpu::Buffer &uniformBuffer, const wgpu::BindGroupLayout &bindGroupLayout) -> bool;
+    auto InitVertexBuffer(const wgpu::Device &device) -> bool;
 };

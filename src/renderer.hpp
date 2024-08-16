@@ -6,8 +6,8 @@
 
 class Renderer {
    private:
-    uint32_t width = 512;
-    uint32_t height = 512;
+    uint32_t width = 0;
+    uint32_t height = 0;
 
     std::unique_ptr<wgpu::Instance> instance;
     std::unique_ptr<wgpu::Adapter> adapter;
@@ -28,20 +28,21 @@ class Renderer {
     Renderer() = default;
     ~Renderer() = default;
     Renderer(const Renderer&) = delete;
-    Renderer& operator=(const Renderer&) = delete;
     Renderer(Renderer&&) = delete;
-    Renderer& operator=(Renderer&&) = delete;
-    bool Initialize();
+    auto operator=(const Renderer&) -> Renderer& = delete;
+    auto operator=(Renderer&&) -> Renderer& = delete;
+
+    auto Initialize() -> bool;
     void Resize(const uint32_t width, const uint32_t height);
     void Render(const float time);
 
    private:
-    void GetCanvasSize(uint32_t& width, uint32_t& height);
-    bool InitInstance();
-    bool InitAdapter(const std::unique_ptr<wgpu::Instance>& instance);
-    bool InitDevice(const std::unique_ptr<wgpu::Adapter>& adapter);
-    bool InitSurface(const std::unique_ptr<wgpu::Instance>& instance, const std::unique_ptr<wgpu::Adapter>& adapter);
-    bool InitQueue(const std::unique_ptr<wgpu::Device>& device);
-    bool InitDepthBuffer(const std::unique_ptr<wgpu::Device>& device, const uint32_t width, const uint32_t height);
-    bool InitSwapChain(const std::unique_ptr<wgpu::Device>& device, const std::unique_ptr<wgpu::Surface>& surface, const wgpu::TextureFormat swapChainFormat, const uint32_t width, const uint32_t height);
+    static void GetCanvasSize(uint32_t& width, uint32_t& height);
+    auto InitInstance() -> bool;
+    auto InitAdapter(const wgpu::Instance& instance) -> bool;
+    auto InitDevice(const wgpu::Adapter& adapter) -> bool;
+    auto InitSurface(const wgpu::Instance& instance, const wgpu::Adapter& adapter) -> bool;
+    auto InitQueue(const wgpu::Device& device) -> bool;
+    auto InitDepthBuffer(const wgpu::Device& device) -> bool;
+    auto InitSwapChain(const wgpu::Device& device, const wgpu::Surface& surface, const wgpu::TextureFormat swapChainFormat, const uint32_t width, const uint32_t height) -> bool;
 };

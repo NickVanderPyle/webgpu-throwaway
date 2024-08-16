@@ -6,15 +6,15 @@
 #include <iostream>
 #include "renderer.hpp"
 
-bool Application::InitGlfw() {
-    if (!glfwInit()) {
+auto Application::InitGlfw() -> bool {
+    if (glfwInit() != GLFW_TRUE) {
         std::cerr << "Cannot initialize GLFW" << std::endl;
         return false;
     }
     return true;
 }
 
-bool Application::Initialize() {
+auto Application::Initialize() -> bool {
     return this->renderer.Initialize();
 }
 
@@ -23,32 +23,27 @@ void Application::Resize(uint32_t width, uint32_t height) {
 }
 
 void Application::Start() {
-    auto callback = [](void *arg) {
-        Application *pApp = reinterpret_cast<Application *>(arg);
-        pApp->MainLoop();
-    };
-
     emscripten_set_resize_callback(
         EMSCRIPTEN_EVENT_TARGET_WINDOW,
         this,
         true,
-        [](int eventType, const EmscriptenUiEvent *uiEvent, void *userData) -> EM_BOOL {
-            auto *app = reinterpret_cast<Application *>(userData);
+        [](int /*eventType*/, const EmscriptenUiEvent *uiEvent, void *userData) -> EM_BOOL {
+            auto *app = static_cast<Application *>(userData);
             app->Resize(uiEvent->windowInnerWidth, uiEvent->windowInnerHeight);
             return EM_TRUE;
         });
 
     emscripten_set_main_loop_arg(
         [](void *arg) {
-            auto *app = reinterpret_cast<Application *>(arg);
+            auto *app = static_cast<Application *>(arg);
             app->MainLoop();
         },
-        this, 0, true);
+        this, 0, (int)true);
 }
 
 void Application::MainLoop() {
     glfwPollEvents();
-    float time = static_cast<float>(glfwGetTime());
+    auto time = static_cast<float>(glfwGetTime());
 
     this->renderer.Render(time);
 }

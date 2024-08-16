@@ -1,20 +1,19 @@
 #include "graphics.hpp"
 
-Graphics::Graphics() {
-    this->line3d_lines.reserve(this->line3d_maxLineCount);
-    this->rectangle_instanceModelMatrices.reserve(this->rectangle_maxRectangleCount);
-    this->line3d_shader = std::make_unique<Line3DShader>(this->line3d_maxLineCount);
-    this->rectangle_shader = std::make_unique<RectangleShader>(this->rectangle_maxRectangleCount);
+Graphics::Graphics()
+    : line3d_shader(std::make_unique<Line3DShader>(Graphics::line3d_maxLineCount)),
+      rectangle_shader(std::make_unique<RectangleShader>(Graphics::rectangle_maxRectangleCount)) {
+    this->line3d_lines.reserve(Graphics::line3d_maxLineCount);
+    this->rectangle_instanceModelMatrices.reserve(Graphics::rectangle_maxRectangleCount);
 }
 
-bool Graphics::InitShaders(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const std::unique_ptr<wgpu::Queue> &queue, const uint32_t width, const uint32_t height) {
-    if (!this->line3d_shader->Init(device, swapChainFormat, depthTextureFormat, queue, width, height)) return false;
-    if (!this->rectangle_shader->Init(device, swapChainFormat, depthTextureFormat, queue, width, height)) return false;
-    return true;
+auto Graphics::InitShaders(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue, const uint32_t width, const uint32_t height) -> bool {
+    return this->line3d_shader->Init(device, swapChainFormat, depthTextureFormat, queue, width, height)
+        && this->rectangle_shader->Init(device, swapChainFormat, depthTextureFormat, queue, width, height);
 }
 
-void Graphics::DrawLine(const glm::vec3 start, const glm::vec3 end, const glm::vec3 color) {
-    if (this->line3d_lines.size() >= this->line3d_maxLineCount) {
+void Graphics::DrawLine(const glm::vec3 start, const glm::vec3 end, const glm::vec3 /*color*/) {
+    if (this->line3d_lines.size() >= Graphics::line3d_maxLineCount) {
         return;
     }
 
@@ -22,7 +21,7 @@ void Graphics::DrawLine(const glm::vec3 start, const glm::vec3 end, const glm::v
 }
 
 void Graphics::DrawRect(const glm::mat4x4 transform) {
-    if (this->rectangle_instanceModelMatrices.size() >= this->rectangle_maxRectangleCount) {
+    if (this->rectangle_instanceModelMatrices.size() >= Graphics::rectangle_maxRectangleCount) {
         return;
     }
 
@@ -34,7 +33,7 @@ void Graphics::Resize(const uint32_t width, const uint32_t height) {
     this->rectangle_shader->Resize(width, height);
 }
 
-void Graphics::Render(const std::unique_ptr<wgpu::RenderPassEncoder> &renderPass, const std::unique_ptr<wgpu::Queue> &queue, float time) {
+void Graphics::Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue &queue, const float time) {
     if (!this->line3d_lines.empty()) {
         this->line3d_shader->UpdateVertexBuffer(queue, this->line3d_lines);
         this->line3d_shader->Render(renderPass, queue, time);

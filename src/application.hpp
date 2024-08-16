@@ -10,15 +10,15 @@ class Application {
     Application() = default;
     ~Application() = default;
     Application(const Application&) = delete;
-    Application& operator=(const Application&) = delete;
     Application(Application&&) = delete;
-    Application& operator=(Application&&) = delete;
+    auto operator=(const Application&) -> Application& = delete;
+    auto operator=(Application&&) -> Application& = delete;
 
-    bool Initialize();
+    auto Initialize() -> bool;
     void Start();
 
    private:
     void Resize(uint32_t width, uint32_t height);
     void MainLoop();
-    bool InitGlfw();
+    static auto InitGlfw() -> bool;
 };

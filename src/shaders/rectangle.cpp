@@ -7,7 +7,7 @@
 
 // offsetof from std lib has trouble with VSCode intellisense, override.
 template <typename T, typename U>
-constexpr size_t offsetOfMember(U T::*member) {
+constexpr auto offsetOfMember(U T::*member) -> size_t {
     return (char *)&((T *)nullptr->*member) - (char *)nullptr;
 }
 
@@ -19,7 +19,7 @@ struct VertexAttributes {
 RectangleShader::RectangleShader(size_t maxRectangleCount) : maxRectangleCount(maxRectangleCount) {
 }
 
-bool RectangleShader::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) {
+auto RectangleShader::InitRenderPipeline(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) -> bool {
     this->shaderModule = ResourceManager::LoadShaderModule("/src/shaders/rectangle.wgsl", device);
 
     std::array<wgpu::VertexAttribute, 2> vertexAttribs{
@@ -44,13 +44,14 @@ bool RectangleShader::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &de
     };
 
     // VertexAttributes::modelMatrix
-    std::array<wgpu::VertexAttribute, 4> instanceAttribs;
-    for (uint32_t i = 0; i < instanceAttribs.size(); i++) {
-        instanceAttribs[i] = wgpu::VertexAttribute{
+    std::array<wgpu::VertexAttribute, 4> instanceAttribs{};
+    for (size_t i = 0; auto &attrib : instanceAttribs) {
+        attrib = wgpu::VertexAttribute{
             .format = wgpu::VertexFormat::Float32x4,
-            .offset = sizeof(glm::vec4) * i,  // glm::mat4x4, each row is vec4
+            .offset = (uint64_t)(sizeof(glm::vec4) * i),  // glm::mat4x4, each row is vec4
             .shaderLocation = 2 + i,
         };
+        i++;
     }
     wgpu::VertexBufferLayout instanceBufferLayout{
         .arrayStride = sizeof(glm::mat4x4),
@@ -120,14 +121,14 @@ bool RectangleShader::InitRenderPipeline(const std::unique_ptr<wgpu::Device> &de
     };
 
     wgpu::PipelineLayoutDescriptor layoutDesc{};
-    pipelineDesc.layout = device->CreatePipelineLayout(&layoutDesc);
+    pipelineDesc.layout = device.CreatePipelineLayout(&layoutDesc);
 
-    this->pipeline = std::make_unique<wgpu::RenderPipeline>(device->CreateRenderPipeline(&pipelineDesc));
+    this->pipeline = std::make_unique<wgpu::RenderPipeline>(device.CreateRenderPipeline(&pipelineDesc));
 
     return this->pipeline != nullptr;
 }
 
-bool RectangleShader::InitVertexBuffer(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Queue> &queue) {
+auto RectangleShader::InitVertexBuffer(const wgpu::Device &device, const wgpu::Queue &queue) -> bool {
     std::array<VertexAttributes, 4> quadVertices = {
         VertexAttributes{.position = glm::vec3(-1.0f, 1.0f, 0.0f), .color = glm::vec3(1.0f, 0.0f, 0.0f)},   // Top-left
         VertexAttributes{.position = glm::vec3(-1.0f, -1.0f, 0.0f), .color = glm::vec3(0.0f, 1.0f, 0.0f)},  // Bottom-left
@@ -138,27 +139,29 @@ bool RectangleShader::InitVertexBuffer(const std::unique_ptr<wgpu::Device> &devi
     wgpu::BufferDescriptor bufferDesc{
         .label = "rectangle_vertex_buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
-        .size = quadVertices.size() * sizeof(VertexAttributes),
+        .size = (uint64_t)(quadVertices.size() * sizeof(VertexAttributes)),
         .mappedAtCreation = false,
     };
 
-    this->vertexBuffer = std::make_unique<wgpu::Buffer>(device->CreateBuffer(&bufferDesc));
-    if (this->vertexBuffer == nullptr) return false;
+    this->vertexBuffer = std::make_unique<wgpu::Buffer>(device.CreateBuffer(&bufferDesc));
+    if (this->vertexBuffer == nullptr) {
+        return false;
+    }
 
-    queue->WriteBuffer(this->vertexBuffer->Get(), 0, quadVertices.data(), quadVertices.size() * sizeof(VertexAttributes));
+    queue.WriteBuffer(this->vertexBuffer->Get(), 0, quadVertices.data(), quadVertices.size() * sizeof(VertexAttributes));
 
     return true;
 }
 
-bool RectangleShader::InitInstanceBuffer(const std::unique_ptr<wgpu::Device> &device, const std::unique_ptr<wgpu::Queue> &queue) {
+auto RectangleShader::InitInstanceBuffer(const wgpu::Device &device) -> bool {
     wgpu::BufferDescriptor bufferDesc{
         .label = "rectangle_index_buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
-        .size = this->maxRectangleCount * sizeof(glm::mat4x4),
+        .size = (uint64_t)(this->maxRectangleCount * sizeof(glm::mat4x4)),
         .mappedAtCreation = false,
     };
 
-    this->instanceBuffer = std::make_unique<wgpu::Buffer>(device->CreateBuffer(&bufferDesc));
+    this->instanceBuffer = std::make_unique<wgpu::Buffer>(device.CreateBuffer(&bufferDesc));
     return this->instanceBuffer != nullptr;
 }
 
@@ -166,15 +169,14 @@ void RectangleShader::Resize(const uint32_t width, const uint32_t height) {
     this->projectionMatrix = glm::perspective(glm::radians(75.0f), float(width) / float(height), 0.1f, 1000.0f);
 }
 
-bool RectangleShader::Init(const std::unique_ptr<wgpu::Device> &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const std::unique_ptr<wgpu::Queue> &queue, const uint32_t width, const uint32_t height) {
-    if (!this->InitRenderPipeline(device, swapChainFormat, depthTextureFormat)) return false;
-    if (!this->InitVertexBuffer(device, queue)) return false;
-    if (!this->InitInstanceBuffer(device, queue)) return false;
+auto RectangleShader::Init(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue, const uint32_t width, const uint32_t height) -> bool {
     this->projectionMatrix = glm::perspective(glm::radians(75.0f), float(width) / float(height), 0.1f, 1000.0f);
-    return true;
+    return this->InitRenderPipeline(device, swapChainFormat, depthTextureFormat)
+        && this->InitVertexBuffer(device, queue)
+        && this->InitInstanceBuffer(device);
 }
 
-void RectangleShader::UpdateBuffers(const std::unique_ptr<wgpu::Queue> &queue, std::vector<glm::mat4x4> &instanceModelMatrices) {
+void RectangleShader::UpdateBuffers(const wgpu::Queue &queue, std::vector<glm::mat4x4> &instanceModelMatrices) {
     // projectionMatrix * viewMatrix * modelMatrix * position;
     // this needs to be done in the shader?
     this->viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 100.0f),  // Camera position in World Space
@@ -185,14 +187,14 @@ void RectangleShader::UpdateBuffers(const std::unique_ptr<wgpu::Queue> &queue, s
         instanceModelMatrix = this->projectionMatrix * this->viewMatrix * instanceModelMatrix;
     }
 
-    queue->WriteBuffer(this->instanceBuffer->Get(), 0, instanceModelMatrices.data(), instanceModelMatrices.size() * sizeof(glm::mat4x4));
+    queue.WriteBuffer(this->instanceBuffer->Get(), 0, instanceModelMatrices.data(), instanceModelMatrices.size() * sizeof(glm::mat4x4));
     this->instanceCount = instanceModelMatrices.size();
 }
 
-void RectangleShader::Render(const std::unique_ptr<wgpu::RenderPassEncoder> &renderPass, const std::unique_ptr<wgpu::Queue> &queue, float time) {
-    renderPass->SetPipeline(this->pipeline->Get());
-    renderPass->SetVertexBuffer(0, this->vertexBuffer->Get());
-    renderPass->SetVertexBuffer(1, this->instanceBuffer->Get());
+void RectangleShader::Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue & /*queue*/, const float /*time*/) {
+    renderPass.SetPipeline(this->pipeline->Get());
+    renderPass.SetVertexBuffer(0, this->vertexBuffer->Get());
+    renderPass.SetVertexBuffer(1, this->instanceBuffer->Get());
 
-    renderPass->Draw(4, this->instanceCount, 0, 0);
+    renderPass.Draw(4, this->instanceCount, 0, 0);
 }

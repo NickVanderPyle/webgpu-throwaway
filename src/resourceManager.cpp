@@ -1,8 +1,7 @@
 #include "resourceManager.hpp"
 #include <fstream>
-#include <memory>
 
-std::unique_ptr<wgpu::ShaderModule> ResourceManager::LoadShaderModule(const std::filesystem::path& path, const std::unique_ptr<wgpu::Device>& device) {
+auto ResourceManager::LoadShaderModule(const std::filesystem::path& path, const wgpu::Device& device) -> std::unique_ptr<wgpu::ShaderModule> {
     std::ifstream file(path);
     std::string shaderSource((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
@@ -15,5 +14,5 @@ std::unique_ptr<wgpu::ShaderModule> ResourceManager::LoadShaderModule(const std:
         .label = path.filename().c_str(),
     };
 
-    return std::make_unique<wgpu::ShaderModule>(device->CreateShaderModule(&shaderDesc));
+    return std::make_unique<wgpu::ShaderModule>(device.CreateShaderModule(&shaderDesc));
 }

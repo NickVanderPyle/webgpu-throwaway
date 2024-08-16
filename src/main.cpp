@@ -1,7 +1,7 @@
 #include <emscripten/emscripten.h>
 #include "application.hpp"
 
-int main() {
+auto main() -> int {
     Application app;
 
     if (!app.Initialize()) {
