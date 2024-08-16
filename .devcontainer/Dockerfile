@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM debian:trixie-backports
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -12,15 +12,21 @@ RUN apt-get update \
     build-essential \
     ca-certificates \
     python3 \
+    python3-pip \
+    pipx \
     # Needed for rustup install
-    curl
+    curl \
+    # Needed for vscode-clangd
+    clangd
 
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/python3 /usr/bin/python \
+    && pipx --version \
+    && pipx ensurepath \
+    && pipx ensurepath --global
 
 # Install emscripten. Mostly copied from: https://github.com/emscripten-core/emsdk/blob/master/docker/Dockerfile
 ENV EMSDK=/opt/emsdk \
     EMSCRIPTEN_VERSION=latest
-USER root
 
 # Stop popup when new terminal is opened.
 RUN echo "export EMSDK_QUIET=1" >> /etc/bash.bashrc
@@ -68,3 +74,5 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
     && echo '. "$HOME/.cargo/env"' >> $HOME/.bashrc \
     && . "$HOME/.cargo/env"
 RUN $HOME/.cargo/bin/cargo install --git https://github.com/wgsl-analyzer/wgsl-analyzer wgsl_analyzer
+
+ENV PATH=${EMSDK}/upstream/bin:$PATH

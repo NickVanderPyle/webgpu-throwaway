@@ -1,6 +1,14 @@
 BasedOnStyle: Google
 IndentWidth: 4
 ColumnLimit: 0
+
+AlignOperands: AlignAfterOperator
+BreakBeforeBinaryOperators: NonAssignment
+PenaltyBreakBeforeFirstCallParameter: 1
+PenaltyBreakString: 1
+PenaltyReturnTypeOnItsOwnLine: 1
+ContinuationIndentWidth: 4
+
 IncludeBlocks: Merge
 SortIncludes: true
 IncludeCategories:

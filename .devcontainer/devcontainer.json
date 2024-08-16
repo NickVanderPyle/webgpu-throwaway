@@ -14,7 +14,10 @@
 		"vscode": {
 			"extensions": [
 				"ms-vscode.live-server",
-				"ms-vscode.cpptools-extension-pack",
+				"ms-vscode.cpptools-themes",
+				"twxs.cmake",
+				"ms-vscode.cmake-tools",
+				"llvm-vs-code-extensions.vscode-clangd",
 				"ms-azuretools.vscode-docker",
 				"wgsl-analyzer.wgsl-analyzer"
 			]

@@ -8,14 +8,10 @@
     "cmake.useCMakePresets": "always",
     "cmake.configureOnOpen": true,
     "cmake.options.statusBarVisibility": "hidden",
-    "C_Cpp.autoAddFileAssociations": false,
-    "C_Cpp.codeAnalysis.runAutomatically": true,
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "C_Cpp.default.mergeConfigurations": false,
     "editor.formatOnSave": true,
-    //"wgsl.validateOnType": true
     "wgsl-analyzer.server.path": "~/.cargo/bin/wgsl_analyzer",
     "wgsl-analyzer.diagnostics.nagaVersion": "0.14",
     "wgsl-analyzer.inlayHints.typeVerbosity": "inner",
-    "wgsl-analyzer.inlayHints.structLayoutHints": true
+    "wgsl-analyzer.inlayHints.structLayoutHints": true,
+    "editor.inlayHints.enabled": "offUnlessPressed"
 }
