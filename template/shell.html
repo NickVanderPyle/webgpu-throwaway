@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>WebGPU-</title>
   <link rel="icon" href="data:,">
@@ -11,6 +12,8 @@
     body {
       margin: 0;
       height: 100%;
+      /* touch-action: none; to prevent touch bubbling up to cause scrolling. */
+      touch-action: none;
     }
 
     .emscripten {

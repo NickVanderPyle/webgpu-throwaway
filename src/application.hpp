@@ -9,6 +9,11 @@ struct MouseDelta {
     int movementY;
 };
 
+struct Point {
+    int x;
+    int y;
+};
+
 class Application {
    private:
     Renderer renderer;
@@ -28,8 +33,10 @@ class Application {
    private:
     bool isMousePointerLocked = false;
     MouseDelta mouseDeltaThisFrame = MouseDelta{.movementX = 0, .movementY = 0};
+    Point lastTouchPoint = Point();
 
     static void GetCanvasSize(uint32_t &width, uint32_t &height);
+    static auto OnTouchMoveCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData) -> EM_BOOL;
     static auto OnPointerLockChangeCallback(int /*eventType*/, const EmscriptenPointerlockChangeEvent *emscEvent, void *userData) -> EM_BOOL;
     static auto OnMouseMoveCallback(int /*eventType*/, const EmscriptenMouseEvent * /*mouseEvent*/, void *userData) -> EM_BOOL;
     static auto OnMouseButtonCallback(int /*eventType*/, const EmscriptenMouseEvent * /*mouseEvent*/, void *userData) -> EM_BOOL;

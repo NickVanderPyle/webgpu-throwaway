@@ -25,12 +25,31 @@ auto Application::OnPointerLockChangeCallback(int /*eventType*/, const Emscripte
 
     return EM_TRUE;
 }
+
 auto Application::OnMouseMoveCallback(int /*eventType*/, const EmscriptenMouseEvent *mouseEvent, void *userData) -> EM_BOOL {
     auto *app = static_cast<Application *>(userData);
 
-    if (app->isMousePointerLocked) {
-        app->mouseDeltaThisFrame.movementX = mouseEvent->movementX;
-        app->mouseDeltaThisFrame.movementY = mouseEvent->movementY;
+    app->mouseDeltaThisFrame.movementX = mouseEvent->movementX;
+    app->mouseDeltaThisFrame.movementY = mouseEvent->movementY;
+
+    return EM_TRUE;
+}
+
+auto Application::OnTouchMoveCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData) -> EM_BOOL {
+    auto *app = static_cast<Application *>(userData);
+
+    switch (eventType) {
+        case EMSCRIPTEN_EVENT_TOUCHSTART:
+            app->lastTouchPoint.x = touchEvent->touches[0].targetX;
+            app->lastTouchPoint.y = touchEvent->touches[0].targetY;
+            break;
+        case EMSCRIPTEN_EVENT_TOUCHMOVE:
+            app->mouseDeltaThisFrame.movementX = touchEvent->touches[0].targetX - app->lastTouchPoint.x;
+            app->mouseDeltaThisFrame.movementY = touchEvent->touches[0].targetY - app->lastTouchPoint.y;
+
+            app->lastTouchPoint.x = touchEvent->touches[0].targetX;
+            app->lastTouchPoint.y = touchEvent->touches[0].targetY;
+            break;
     }
 
     return EM_TRUE;
@@ -62,9 +81,10 @@ auto Application::InitGlfw() -> bool {
 }
 
 auto Application::InitializeMouseMovement() -> bool {
-    return (emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnMouseMoveCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
-        && (emscripten_set_mousedown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, this->OnMouseButtonCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
-        && (emscripten_set_mouseup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, this->OnMouseButtonCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
+    return (emscripten_set_touchmove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnTouchMoveCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
+        && (emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnMouseMoveCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
+        && (emscripten_set_mousedown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnMouseButtonCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
+        && (emscripten_set_mouseup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnMouseButtonCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
         && (emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, EM_TRUE, this->OnPointerLockChangeCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
         && (emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnKeyPressCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS;
 }
