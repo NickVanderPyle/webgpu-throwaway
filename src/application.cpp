@@ -44,8 +44,8 @@ auto Application::OnTouchMoveCallback(int eventType, const EmscriptenTouchEvent 
             app->lastTouchPoint.y = touchEvent->touches[0].targetY;
             break;
         case EMSCRIPTEN_EVENT_TOUCHMOVE:
-            app->mouseDeltaThisFrame.movementX = touchEvent->touches[0].targetX - app->lastTouchPoint.x;
-            app->mouseDeltaThisFrame.movementY = touchEvent->touches[0].targetY - app->lastTouchPoint.y;
+            app->mouseDeltaThisFrame.movementX = app->lastTouchPoint.x - touchEvent->touches[0].targetX;
+            app->mouseDeltaThisFrame.movementY = app->lastTouchPoint.y - touchEvent->touches[0].targetY;
 
             app->lastTouchPoint.x = touchEvent->touches[0].targetX;
             app->lastTouchPoint.y = touchEvent->touches[0].targetY;
