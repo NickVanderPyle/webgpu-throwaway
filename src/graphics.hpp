@@ -1,8 +1,8 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <vector>
+#include "shaders/cube.hpp"
 #include "shaders/line3d.hpp"
-#include "shaders/rectangle.hpp"
 
 class Graphics {
    public:
@@ -30,7 +30,7 @@ class Graphics {
     std::vector<Line3D> line3d_lines;
     static constexpr size_t line3d_maxLineCount = 5000;
 
-    std::unique_ptr<RectangleShader> rectangle_shader;
-    std::vector<glm::mat4x4> rectangle_instanceModelMatrices;
-    static constexpr size_t rectangle_maxRectangleCount = 5000;
+    std::unique_ptr<CubeShader> cube_shader;
+    std::vector<glm::mat4x4> cube_instanceModelMatrices;
+    static constexpr size_t cube_maxCubeCount = 5000;
 };

@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-struct Rectangle {
+struct Cube {
     glm::vec3 topLeft;
     glm::vec3 bottomLeft;
     glm::vec3 topRight;
@@ -21,14 +21,14 @@ struct MyUniforms {
 // Have the compiler check byte alignment
 static_assert(sizeof(MyUniforms) % 16 == 0);
 
-class RectangleShader {
+class CubeShader {
    public:
-    RectangleShader(size_t maxRectangleCount);
-    ~RectangleShader() = default;
-    RectangleShader(const RectangleShader &) = delete;
-    RectangleShader(RectangleShader &&) = delete;
-    auto operator=(const RectangleShader &) -> RectangleShader & = delete;
-    auto operator=(RectangleShader &&) -> RectangleShader & = delete;
+    CubeShader(size_t maxCubeCount);
+    ~CubeShader() = default;
+    CubeShader(const CubeShader &) = delete;
+    CubeShader(CubeShader &&) = delete;
+    auto operator=(const CubeShader &) -> CubeShader & = delete;
+    auto operator=(CubeShader &&) -> CubeShader & = delete;
 
     auto Init(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue) -> bool;
     void UpdateBuffers(const wgpu::Queue &queue, std::vector<glm::mat4x4> &instanceModelMatrices);
@@ -44,7 +44,7 @@ class RectangleShader {
     std::unique_ptr<wgpu::Buffer> instanceBuffer;
     MyUniforms uniforms = MyUniforms();
     size_t instanceCount = 0;
-    size_t maxRectangleCount;
+    size_t maxCubeCount;
 
     auto InitBindGroupLayout(const wgpu::Device &device) -> bool;
     auto InitRenderPipeline(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) -> bool;

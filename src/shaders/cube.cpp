@@ -1,5 +1,6 @@
-#include "rectangle.hpp"
+#include "cube.hpp"
 #include <cstddef>
+#include <vector>
 #include "../resourceManager.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -16,11 +17,11 @@ struct VertexAttributes {
     glm::vec3 color;
 };
 
-RectangleShader::RectangleShader(size_t maxRectangleCount) : maxRectangleCount(maxRectangleCount) {
+CubeShader::CubeShader(size_t maxCubeCount) : maxCubeCount(maxCubeCount) {
 }
 
-auto RectangleShader::InitRenderPipeline(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) -> bool {
-    this->shaderModule = ResourceManager::LoadShaderModule("/src/shaders/rectangle.wgsl", device);
+auto CubeShader::InitRenderPipeline(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat) -> bool {
+    this->shaderModule = ResourceManager::LoadShaderModule("/src/shaders/cube.wgsl", device);
 
     std::array<wgpu::VertexAttribute, 2> vertexAttribs{
         // VertexAttributes::positiom
@@ -96,7 +97,7 @@ auto RectangleShader::InitRenderPipeline(const wgpu::Device &device, const wgpu:
     };
 
     wgpu::RenderPipelineDescriptor pipelineDesc{
-        .label = "rectangle",
+        .label = "cube",
         .vertex = wgpu::VertexState{
             .module = this->shaderModule->Get(),
             .entryPoint = "vs_main",
@@ -121,7 +122,7 @@ auto RectangleShader::InitRenderPipeline(const wgpu::Device &device, const wgpu:
     };
 
     wgpu::PipelineLayoutDescriptor layoutDesc{
-        .label = "rectangle pipeline layout",
+        .label = "cube pipeline layout",
         .bindGroupLayoutCount = 1,
         .bindGroupLayouts = this->bindGroupLayout.get(),
     };
@@ -133,9 +134,9 @@ auto RectangleShader::InitRenderPipeline(const wgpu::Device &device, const wgpu:
     return this->pipeline != nullptr;
 }
 
-auto RectangleShader::InitUniforms(const wgpu::Device &device) -> bool {
+auto CubeShader::InitUniforms(const wgpu::Device &device) -> bool {
     wgpu::BufferDescriptor bufferDesc{
-        .label = "rectangle",
+        .label = "cube",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
         .size = sizeof(MyUniforms),
         .mappedAtCreation = false,
@@ -145,7 +146,7 @@ auto RectangleShader::InitUniforms(const wgpu::Device &device) -> bool {
     return this->uniformBuffer != nullptr;
 }
 
-auto RectangleShader::InitBindGroupLayout(const wgpu::Device &device) -> bool {
+auto CubeShader::InitBindGroupLayout(const wgpu::Device &device) -> bool {
     std::array<wgpu::BindGroupLayoutEntry, 1> bindingLayoutEntries{
         wgpu::BindGroupLayoutEntry{
             .binding = 0,
@@ -159,7 +160,7 @@ auto RectangleShader::InitBindGroupLayout(const wgpu::Device &device) -> bool {
     };
 
     wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc{
-        .label = "rectangle",
+        .label = "cube",
         .entryCount = (uint32_t)bindingLayoutEntries.size(),
         .entries = bindingLayoutEntries.data(),
     };
@@ -168,7 +169,7 @@ auto RectangleShader::InitBindGroupLayout(const wgpu::Device &device) -> bool {
     return this->bindGroupLayout != nullptr;
 }
 
-auto RectangleShader::InitBindGroup(const wgpu::Device &device, const wgpu::Buffer &uniformBuffer, const wgpu::BindGroupLayout &bindGroupLayout) -> bool {
+auto CubeShader::InitBindGroup(const wgpu::Device &device, const wgpu::Buffer &uniformBuffer, const wgpu::BindGroupLayout &bindGroupLayout) -> bool {
     std::array<wgpu::BindGroupEntry, 1> bindings = {
         wgpu::BindGroupEntry{
             .binding = 0,
@@ -179,7 +180,7 @@ auto RectangleShader::InitBindGroup(const wgpu::Device &device, const wgpu::Buff
     };
 
     wgpu::BindGroupDescriptor bindGroupDesc = {
-        .label = "rectangle uniform bind group",
+        .label = "cube uniform bind group",
         .layout = bindGroupLayout.Get(),
         .entryCount = (uint32_t)bindings.size(),
         .entries = bindings.data(),
@@ -189,16 +190,26 @@ auto RectangleShader::InitBindGroup(const wgpu::Device &device, const wgpu::Buff
     return this->bindGroup != nullptr;
 }
 
-auto RectangleShader::InitVertexBuffer(const wgpu::Device &device, const wgpu::Queue &queue) -> bool {
-    std::array<VertexAttributes, 4> quadVertices = {
-        VertexAttributes{.position = glm::vec3(-1.0f, 1.0f, 0.0f), .color = glm::vec3(1.0f, 0.0f, 0.0f)},   // Top-left
-        VertexAttributes{.position = glm::vec3(-1.0f, -1.0f, 0.0f), .color = glm::vec3(0.0f, 1.0f, 0.0f)},  // Bottom-left
-        VertexAttributes{.position = glm::vec3(1.0f, 1.0f, 0.0f), .color = glm::vec3(0.0f, 0.0f, 1.0f)},    // Top-right
-        VertexAttributes{.position = glm::vec3(1.0f, -1.0f, 0.0f), .color = glm::vec3(1.0f, 0.0f, 1.0f)}    // Bottom-right
+auto CubeShader::InitVertexBuffer(const wgpu::Device &device, const wgpu::Queue &queue) -> bool {
+    std::vector<VertexAttributes> quadVertices = {
+        VertexAttributes{.position = glm::vec3(-1.0f, 1.0f, 1.0f), .color = glm::vec3(1.0f, 0.0f, 0.0f)},    // Front-top-left
+        VertexAttributes{.position = glm::vec3(1.0f, 1.0f, 1.0f), .color = glm::vec3(0.0f, 1.0f, 0.0f)},     // Front-top-right
+        VertexAttributes{.position = glm::vec3(-1.0f, -1.0f, 1.0f), .color = glm::vec3(0.0f, 0.0f, 1.0f)},   // Front-bottom-left
+        VertexAttributes{.position = glm::vec3(1.0f, -1.0f, 1.0f), .color = glm::vec3(1.0f, 0.0f, 1.0f)},    // Front-bottom-right
+        VertexAttributes{.position = glm::vec3(1.0f, -1.0f, -1.0f), .color = glm::vec3(1.0f, 1.0f, 0.0f)},   // Back-bottom-right
+        VertexAttributes{.position = glm::vec3(1.0f, 1.0f, 1.0f), .color = glm::vec3(0.0f, 1.0f, 0.0f)},     // Front-top-right
+        VertexAttributes{.position = glm::vec3(1.0f, 1.0f, -1.0f), .color = glm::vec3(1.0f, 0.0f, 1.0f)},    // Back-top-right
+        VertexAttributes{.position = glm::vec3(-1.0f, 1.0f, 1.0f), .color = glm::vec3(1.0f, 0.0f, 0.0f)},    // Front-top-left
+        VertexAttributes{.position = glm::vec3(-1.0f, 1.0f, -1.0f), .color = glm::vec3(1.0f, 0.0f, 1.0f)},   // Back-top-left
+        VertexAttributes{.position = glm::vec3(-1.0f, -1.0f, 1.0f), .color = glm::vec3(0.0f, 0.0f, 1.0f)},   // Front-bottom-left
+        VertexAttributes{.position = glm::vec3(-1.0f, -1.0f, -1.0f), .color = glm::vec3(0.5f, 0.5f, 0.5f)},  // Back-bottom-left
+        VertexAttributes{.position = glm::vec3(1.0f, -1.0f, -1.0f), .color = glm::vec3(1.0f, 1.0f, 0.0f)},   // Back-bottom-right
+        VertexAttributes{.position = glm::vec3(-1.0f, 1.0f, -1.0f), .color = glm::vec3(1.0f, 0.0f, 1.0f)},   // Back-top-left
+        VertexAttributes{.position = glm::vec3(1.0f, 1.0f, -1.0f), .color = glm::vec3(1.0f, 0.0f, 1.0f)},    // Back-top-right
     };
 
     wgpu::BufferDescriptor bufferDesc{
-        .label = "rectangle_vertex_buffer",
+        .label = "cube_vertex_buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
         .size = (uint64_t)(quadVertices.size() * sizeof(VertexAttributes)),
         .mappedAtCreation = false,
@@ -214,11 +225,11 @@ auto RectangleShader::InitVertexBuffer(const wgpu::Device &device, const wgpu::Q
     return true;
 }
 
-auto RectangleShader::InitInstanceBuffer(const wgpu::Device &device) -> bool {
+auto CubeShader::InitInstanceBuffer(const wgpu::Device &device) -> bool {
     wgpu::BufferDescriptor bufferDesc{
-        .label = "rectangle_index_buffer",
+        .label = "cube_index_buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
-        .size = (uint64_t)(this->maxRectangleCount * sizeof(glm::mat4x4)),
+        .size = (uint64_t)(this->maxCubeCount * sizeof(glm::mat4x4)),
         .mappedAtCreation = false,
     };
 
@@ -226,7 +237,7 @@ auto RectangleShader::InitInstanceBuffer(const wgpu::Device &device) -> bool {
     return this->instanceBuffer != nullptr;
 }
 
-auto RectangleShader::Init(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue) -> bool {
+auto CubeShader::Init(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue) -> bool {
     return this->InitBindGroupLayout(device)
         && this->InitRenderPipeline(device, swapChainFormat, depthTextureFormat)
         && this->InitUniforms(device)
@@ -235,12 +246,12 @@ auto RectangleShader::Init(const wgpu::Device &device, const wgpu::TextureFormat
         && this->InitInstanceBuffer(device);
 }
 
-void RectangleShader::UpdateBuffers(const wgpu::Queue &queue, std::vector<glm::mat4x4> &instanceModelMatrices) {
+void CubeShader::UpdateBuffers(const wgpu::Queue &queue, std::vector<glm::mat4x4> &instanceModelMatrices) {
     queue.WriteBuffer(this->instanceBuffer->Get(), 0, instanceModelMatrices.data(), instanceModelMatrices.size() * sizeof(glm::mat4x4));
     this->instanceCount = instanceModelMatrices.size();
 }
 
-void RectangleShader::Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue &queue, const glm::mat4x4 cameraViewMatrix, const glm::mat4x4 projectionMatrix, const float time) {
+void CubeShader::Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue &queue, const glm::mat4x4 cameraViewMatrix, const glm::mat4x4 projectionMatrix, const float time) {
     MyUniforms uniforms = this->uniforms;
     uniforms.time = time;
 
@@ -255,5 +266,5 @@ void RectangleShader::Render(const wgpu::RenderPassEncoder &renderPass, const wg
     queue.WriteBuffer(this->uniformBuffer->Get(), dynamicOffset, &uniforms, sizeof(MyUniforms));
     renderPass.SetBindGroup(0, this->bindGroup->Get(), 1, &dynamicOffset);
 
-    renderPass.Draw(4, this->instanceCount, 0, 0);
+    renderPass.Draw(14, this->instanceCount, 0, 0);
 }
