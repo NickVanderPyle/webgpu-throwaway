@@ -23,7 +23,7 @@ class Graphics {
 
     auto InitShaders(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue, const uint32_t width, const uint32_t height) -> bool;
     void Resize(const uint32_t width, const uint32_t height);
-    void Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue &queue, const float time);
+    void Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue &queue, const glm::mat4x4 cameraViewMatrix, const glm::mat4x4 projectionMatrix, const float time);
 
    private:
     std::unique_ptr<Line3DShader> line3d_shader;

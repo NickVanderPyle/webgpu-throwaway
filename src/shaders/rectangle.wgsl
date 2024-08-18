@@ -12,6 +12,14 @@ struct VertexOutput {
 	@location(0) color: vec3<f32>,
 };
 
+struct Uniforms {
+    viewMatrix: mat4x4<f32>,
+    projectionMatrix: mat4x4<f32>,
+    time: f32,
+};
+
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     let modelMatrix = mat4x4<f32>(
@@ -21,7 +29,8 @@ fn vs_main(in: VertexInput) -> VertexOutput {
         in.modelMatrix3
     );
     var out: VertexOutput;
-    out.position = modelMatrix * vec4<f32>(in.position, 1.0);
+    var position = vec4<f32>(in.position, 1.0);
+    out.position = uniforms.projectionMatrix * uniforms.viewMatrix * modelMatrix * position;
 
     out.color = in.color;
     return out;

@@ -120,12 +120,73 @@ auto RectangleShader::InitRenderPipeline(const wgpu::Device &device, const wgpu:
         .fragment = &fragmentState,
     };
 
-    wgpu::PipelineLayoutDescriptor layoutDesc{};
+    wgpu::PipelineLayoutDescriptor layoutDesc{
+        .label = "rectangle pipeline layout",
+        .bindGroupLayoutCount = 1,
+        .bindGroupLayouts = this->bindGroupLayout.get(),
+    };
+
     pipelineDesc.layout = device.CreatePipelineLayout(&layoutDesc);
 
     this->pipeline = std::make_unique<wgpu::RenderPipeline>(device.CreateRenderPipeline(&pipelineDesc));
 
     return this->pipeline != nullptr;
+}
+
+auto RectangleShader::InitUniforms(const wgpu::Device &device) -> bool {
+    wgpu::BufferDescriptor bufferDesc{
+        .label = "rectangle",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+        .size = sizeof(MyUniforms),
+        .mappedAtCreation = false,
+    };
+    this->uniformBuffer = std::make_unique<wgpu::Buffer>(device.CreateBuffer(&bufferDesc));
+
+    return this->uniformBuffer != nullptr;
+}
+
+auto RectangleShader::InitBindGroupLayout(const wgpu::Device &device) -> bool {
+    std::array<wgpu::BindGroupLayoutEntry, 1> bindingLayoutEntries{
+        wgpu::BindGroupLayoutEntry{
+            .binding = 0,
+            .visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment,
+            .buffer = wgpu::BufferBindingLayout{
+                .type = wgpu::BufferBindingType::Uniform,
+                .hasDynamicOffset = true,
+                .minBindingSize = sizeof(MyUniforms),
+            },
+        },
+    };
+
+    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc{
+        .label = "rectangle",
+        .entryCount = (uint32_t)bindingLayoutEntries.size(),
+        .entries = bindingLayoutEntries.data(),
+    };
+    this->bindGroupLayout = std::make_unique<wgpu::BindGroupLayout>(device.CreateBindGroupLayout(&bindGroupLayoutDesc));
+
+    return this->bindGroupLayout != nullptr;
+}
+
+auto RectangleShader::InitBindGroup(const wgpu::Device &device, const wgpu::Buffer &uniformBuffer, const wgpu::BindGroupLayout &bindGroupLayout) -> bool {
+    std::array<wgpu::BindGroupEntry, 1> bindings = {
+        wgpu::BindGroupEntry{
+            .binding = 0,
+            .buffer = uniformBuffer.Get(),
+            .offset = 0,
+            .size = sizeof(MyUniforms),
+        },
+    };
+
+    wgpu::BindGroupDescriptor bindGroupDesc = {
+        .label = "rectangle uniform bind group",
+        .layout = bindGroupLayout.Get(),
+        .entryCount = (uint32_t)bindings.size(),
+        .entries = bindings.data(),
+    };
+    this->bindGroup = std::make_unique<wgpu::BindGroup>(device.CreateBindGroup(&bindGroupDesc));
+
+    return this->bindGroup != nullptr;
 }
 
 auto RectangleShader::InitVertexBuffer(const wgpu::Device &device, const wgpu::Queue &queue) -> bool {
@@ -165,36 +226,34 @@ auto RectangleShader::InitInstanceBuffer(const wgpu::Device &device) -> bool {
     return this->instanceBuffer != nullptr;
 }
 
-void RectangleShader::Resize(const uint32_t width, const uint32_t height) {
-    this->projectionMatrix = glm::perspective(glm::radians(75.0f), float(width) / float(height), 0.1f, 1000.0f);
-}
-
-auto RectangleShader::Init(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue, const uint32_t width, const uint32_t height) -> bool {
-    this->projectionMatrix = glm::perspective(glm::radians(75.0f), float(width) / float(height), 0.1f, 1000.0f);
-    return this->InitRenderPipeline(device, swapChainFormat, depthTextureFormat)
+auto RectangleShader::Init(const wgpu::Device &device, const wgpu::TextureFormat swapChainFormat, const wgpu::TextureFormat depthTextureFormat, const wgpu::Queue &queue) -> bool {
+    return this->InitBindGroupLayout(device)
+        && this->InitRenderPipeline(device, swapChainFormat, depthTextureFormat)
+        && this->InitUniforms(device)
+        && this->InitBindGroup(device, this->uniformBuffer->Get(), this->bindGroupLayout->Get())
         && this->InitVertexBuffer(device, queue)
         && this->InitInstanceBuffer(device);
 }
 
 void RectangleShader::UpdateBuffers(const wgpu::Queue &queue, std::vector<glm::mat4x4> &instanceModelMatrices) {
-    // projectionMatrix * viewMatrix * modelMatrix * position;
-    // this needs to be done in the shader?
-    this->viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 100.0f),  // Camera position in World Space
-                                   glm::vec3(0.0f, 0.0, 0.0f),     // and looks at the origin
-                                   glm::vec3(0.0f, 1.0f, 0.0f));   // Head is up
-
-    for (auto &instanceModelMatrix : instanceModelMatrices) {
-        instanceModelMatrix = this->projectionMatrix * this->viewMatrix * instanceModelMatrix;
-    }
-
     queue.WriteBuffer(this->instanceBuffer->Get(), 0, instanceModelMatrices.data(), instanceModelMatrices.size() * sizeof(glm::mat4x4));
     this->instanceCount = instanceModelMatrices.size();
 }
 
-void RectangleShader::Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue & /*queue*/, const float /*time*/) {
+void RectangleShader::Render(const wgpu::RenderPassEncoder &renderPass, const wgpu::Queue &queue, const glm::mat4x4 cameraViewMatrix, const glm::mat4x4 projectionMatrix, const float time) {
+    MyUniforms uniforms = this->uniforms;
+    uniforms.time = time;
+
+    this->uniforms.viewMatrix = cameraViewMatrix;
+    this->uniforms.projectionMatrix = projectionMatrix;
+
     renderPass.SetPipeline(this->pipeline->Get());
     renderPass.SetVertexBuffer(0, this->vertexBuffer->Get());
     renderPass.SetVertexBuffer(1, this->instanceBuffer->Get());
+
+    uint32_t dynamicOffset = 0;
+    queue.WriteBuffer(this->uniformBuffer->Get(), dynamicOffset, &uniforms, sizeof(MyUniforms));
+    renderPass.SetBindGroup(0, this->bindGroup->Get(), 1, &dynamicOffset);
 
     renderPass.Draw(4, this->instanceCount, 0, 0);
 }

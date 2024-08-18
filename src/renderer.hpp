@@ -6,9 +6,6 @@
 
 class Renderer {
    private:
-    uint32_t width = 0;
-    uint32_t height = 0;
-
     std::unique_ptr<wgpu::Instance> instance;
     std::unique_ptr<wgpu::Adapter> adapter;
     std::unique_ptr<wgpu::Device> device;
@@ -32,17 +29,16 @@ class Renderer {
     auto operator=(const Renderer&) -> Renderer& = delete;
     auto operator=(Renderer&&) -> Renderer& = delete;
 
-    auto Initialize() -> bool;
+    auto Initialize(const uint32_t width, const uint32_t height) -> bool;
     void Resize(const uint32_t width, const uint32_t height);
-    void Render(const float time);
+    void Render(const glm::mat4x4 cameraViewMatrix, const glm::mat4x4 projectionMatrix, const float time);
 
    private:
-    static void GetCanvasSize(uint32_t& width, uint32_t& height);
     auto InitInstance() -> bool;
     auto InitAdapter(const wgpu::Instance& instance) -> bool;
     auto InitDevice(const wgpu::Adapter& adapter) -> bool;
     auto InitSurface(const wgpu::Instance& instance, const wgpu::Adapter& adapter) -> bool;
     auto InitQueue(const wgpu::Device& device) -> bool;
-    auto InitDepthBuffer(const wgpu::Device& device) -> bool;
+    auto InitDepthBuffer(const wgpu::Device& device, const uint32_t width, const uint32_t height) -> bool;
     auto InitSwapChain(const wgpu::Device& device, const wgpu::Surface& surface, const wgpu::TextureFormat swapChainFormat, const uint32_t width, const uint32_t height) -> bool;
 };
