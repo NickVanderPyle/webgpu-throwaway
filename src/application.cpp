@@ -35,22 +35,23 @@ auto Application::OnMouseMoveCallback(int /*eventType*/, const EmscriptenMouseEv
     return EM_TRUE;
 }
 
-auto Application::OnTouchMoveCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData) -> EM_BOOL {
+auto Application::OnTouchStartCallback(int /*eventType*/, const EmscriptenTouchEvent *touchEvent, void *userData) -> EM_BOOL {
     auto *app = static_cast<Application *>(userData);
 
-    switch (eventType) {
-        case EMSCRIPTEN_EVENT_TOUCHSTART:
-            app->lastTouchPoint.x = touchEvent->touches[0].targetX;
-            app->lastTouchPoint.y = touchEvent->touches[0].targetY;
-            break;
-        case EMSCRIPTEN_EVENT_TOUCHMOVE:
-            app->mouseDeltaThisFrame.movementX = app->lastTouchPoint.x - touchEvent->touches[0].targetX;
-            app->mouseDeltaThisFrame.movementY = app->lastTouchPoint.y - touchEvent->touches[0].targetY;
+    app->lastTouchPoint.x = touchEvent->touches[0].targetX;
+    app->lastTouchPoint.y = touchEvent->touches[0].targetY;
 
-            app->lastTouchPoint.x = touchEvent->touches[0].targetX;
-            app->lastTouchPoint.y = touchEvent->touches[0].targetY;
-            break;
-    }
+    return EM_TRUE;
+}
+
+auto Application::OnTouchMoveCallback(int /*eventType*/, const EmscriptenTouchEvent *touchEvent, void *userData) -> EM_BOOL {
+    auto *app = static_cast<Application *>(userData);
+
+    app->mouseDeltaThisFrame.movementX = app->lastTouchPoint.x - touchEvent->touches[0].targetX;
+    app->mouseDeltaThisFrame.movementY = app->lastTouchPoint.y - touchEvent->touches[0].targetY;
+
+    app->lastTouchPoint.x = touchEvent->touches[0].targetX;
+    app->lastTouchPoint.y = touchEvent->touches[0].targetY;
 
     return EM_TRUE;
 }
@@ -81,7 +82,8 @@ auto Application::InitGlfw() -> bool {
 }
 
 auto Application::InitializeMouseMovement() -> bool {
-    return (emscripten_set_touchmove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnTouchMoveCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
+    return (emscripten_set_touchstart_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnTouchStartCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
+        && (emscripten_set_touchmove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnTouchMoveCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
         && (emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnMouseMoveCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
         && (emscripten_set_mousedown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnMouseButtonCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
         && (emscripten_set_mouseup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_TRUE, this->OnMouseButtonCallback) & ~EMSCRIPTEN_RESULT_DEFERRED) == EMSCRIPTEN_RESULT_SUCCESS
