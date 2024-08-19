@@ -6,6 +6,8 @@ Live build at:
 
 🔗 **[WebGPU Experiment Live Demo](https://nickvanderpyle.github.io/webgpu-throwaway/)**
 
+![Animated screen recording of spinning cubes arranged in a sphere pattern.](./assets/demo.gif)
+
 ## Getting Started
 
 To explore the project locally, follow these steps:
